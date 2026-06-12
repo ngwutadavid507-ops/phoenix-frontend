@@ -58,6 +58,7 @@
     <div id="signals-container">Awaiting link telemetry stream...</div>
 
     <script>
+        // Initialize Telegram WebApp interface interface
         const tg = window.Telegram.WebApp;
         tg.expand();
         
@@ -68,23 +69,37 @@
             document.getElementById('user-greeting').innerText = "Running Sandbox Environment Instance";
         }
 
-        // Default to a temporary public dummy data loop so it loads beautifully before backend link
+        // Bound to your live Render Python service
+        const BACKEND_URL = "https://phoenix-signal-backend.onrender.com"; 
+
         async function fetchLiveSignals() {
-            const container = document.getElementById('signals-container');
-            container.innerHTML = `
-                <div class="signal-card" style="border-left-color: #10b981">
-                    <div class="signal-header">
-                        <span>BTC/USDT</span>
-                        <span style="color: #10b981">LONG</span>
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/v1/history`);
+                const json = await res.json();
+                const container = document.getElementById('signals-container');
+                
+                if (!json.data || json.data.length === 0) {
+                    container.innerHTML = "<div style='color:#94a3b8; text-align:center; padding:20px;'>No live signals processed by core engine yet.</div>";
+                    return;
+                }
+                
+                container.innerHTML = json.data.map(sig => `
+                    <div class="signal-card" style="border-left-color: ${sig.direction === 'LONG' ? '#10b981' : '#ef4444'}">
+                        <div class="signal-header">
+                            <span>${sig.asset_pair}</span>
+                            <span style="color: ${sig.direction === 'LONG' ? '#10b981' : '#ef4444'}">${sig.direction}</span>
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric-item">🏁 <b>Entry:</b> ${sig.entry_zone}</div>
+                            <div class="metric-item">🛑 <b>Stop Loss:</b> ${sig.stop_loss}</div>
+                            <div class="metric-item" style="grid-column: span 2">🎯 <b>Targets:</b> ${sig.take_profit.join(', ')}</div>
+                        </div>
+                        <div class="reasoning">💡 ${sig.analysis_reason}</div>
                     </div>
-                    <div class="metrics-grid">
-                        <div class="metric-item">🏁 <b>Entry:</b> 64500-65200</div>
-                        <div class="metric-item">🛑 <b>Stop Loss:</b> 62000</div>
-                        <div class="metric-item" style="grid-column: span 2">🎯 <b>Targets:</b> 68000, 71000</div>
-                    </div>
-                    <div class="reasoning">💡 System online. Frontend is ready to bind with your local Termux backend endpoints!</div>
-                </div>
-            `;
+                `).join('');
+            } catch(err) {
+                document.getElementById('signals-container').innerHTML = "<div style='color:#ef4444; text-align:center; padding:20px;'>⚠️ Error syncing with cloud telemetry cluster.</div>";
+            }
         }
 
         fetchLiveSignals();
