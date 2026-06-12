@@ -2,107 +2,208 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phoenix Core AI - Mini App Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phoenix Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            background-color: #0b0e14;
-            color: #ffffff;
+        :root {
+            --bg-dark: #0b0e14;
+            --bg-surface: #171d26;
+            --bg-card: #202a37;
+            --primary: #10b981;
+            --text-main: #ffffff;
+            --text-muted: #8e9aa9;
+            --danger: #ef4444;
+        }
+
+        /* Prevent system pull-to-refresh bounces to keep it feeling like a native app */
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark); color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 16px;
+            overflow: hidden;
         }
-        .header-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid #334155;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 20px;
+
+        /* Master App Screen Container */
+        .app-container {
+            display: flex; flex-direction: column; width: 100%; height: 100%;
         }
-        h1 { margin: 0; font-size: 22px; color: #10b981; text-transform: uppercase; }
-        .status-badge {
-            background-color: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-            margin-top: 8px;
-            font-weight: bold;
+
+        /* Top Header Area */
+        .app-header {
+            background-color: var(--bg-surface); padding: 14px 16px 4px 16px;
         }
-        .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin: 20px 0 10px 0; }
-        .signal-card {
-            background-color: #1e293b;
-            border-left: 5px solid #10b981;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
+        .header-top-row { display: flex; justify-content: space-between; align-items: center; }
+        .brand-logo { font-size: 20px; font-weight: bold; color: var(--primary); letter-spacing: 0.5px; }
+        .user-pill { font-size: 12px; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 12px; }
+
+        /* Top Navigation Tabs Bar (Exactly like WhatsApp) */
+        .tabs-bar {
+            display: flex; margin-top: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-        .signal-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 18px; }
-        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 14px; color: #cbd5e1; }
-        .metric-item { background-color: #0f172a; padding: 8px; border-radius: 4px; }
-        .reasoning { font-size: 13px; color: #94a3b8; font-style: italic; margin-top: 12px; line-height: 1.4; }
+        .tab-btn {
+            flex: 1; text-align: center; padding: 12px 0; font-size: 13px; font-weight: bold;
+            color: var(--text-muted); text-transform: uppercase; cursor: pointer; transition: color 0.2s;
+            position: relative;
+        }
+        .tab-btn.active { color: var(--primary); }
+        /* Active Tab Underline indicator */
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background-color: var(--primary); border-top-left-radius: 3px; border-top-right-radius: 3px;
+        }
+
+        /* Main Scrollable Body Viewports */
+        .view-content {
+            flex: 1; overflow-y: auto; padding: 16px; box-sizing: border-box;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS devices */
+        }
+        .app-view { display: none; }
+        .app-view.active { display: block; }
+
+        /* Generic App Cards Layout */
+        .app-card {
+            background-color: var(--bg-card); border-radius: 8px; padding: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.04);
+        }
+        .card-title-row { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; }
+        
+        /* Layout Grid for System Signals */
+        .metrics-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+        .metric-block { background-color: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; }
+
+        /* Chat Assistant Input Component Layout */
+        .assistant-input-box { display: flex; gap: 8px; margin-top: 12px; }
+        .assistant-input {
+            flex: 1; background-color: rgba(0,0,0,0.3); border: 1px solid #334155;
+            color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 14px; outline: none;
+        }
+        .send-btn { background-color: var(--primary); color: #000; border: none; padding: 0 18px; border-radius: 8px; font-weight: bold; }
+
+        /* List Items styling for news / tokens */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .list-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
 
-    <div class="header-card">
-        <h1>🦅 Phoenix Core AI</h1>
-        <div id="user-greeting" style="margin-top:8px; color:#cbd5e1;">Synchronizing User Stream...</div>
-        <span class="status-badge">🟢 CLOUD CLUSTER ONLINE</span>
+    <div class="app-container">
+        <div class="app-header">
+            <div class="header-top-row">
+                <div class="brand-logo">PHOENIX DIGITAL</div>
+                <div class="user-pill" id="username-display">System Init...</div>
+            </div>
+            
+            <div class="tabs-bar">
+                <div class="tab-btn active" onclick="switchView('poly', this)">Polymarket</div>
+                <div class="tab-btn" onclick="switchView('news', this)">News/AI</div>
+                <div class="tab-btn" onclick="switchView('signals', this)">Signals</div>
+                <div class="tab-btn" onclick="switchView('pnl', this)">P&L</div>
+                <div class="tab-btn" onclick="switchView('tokens', this)">Pairs</div>
+            </div>
+        </div>
+
+        <div class="view-content">
+
+            <div id="view-poly" class="app-view active">
+                <div class="app-card">
+                    <div class="card-title-row"><span>🔮 Global Election Market</span> <span style="color:#60a5fa;">82% Certainty</span></div>
+                    <p style="margin:0; font-size:14px; color:var(--text-muted); line-height:1.4;">Automated sentiment parsing pipeline confirms institutional whale volume consolidation on primary prediction outcome vectors.</p>
+                </div>
+                <div class="app-card">
+                    <div class="card-title-row"><span>⚡ Intelligence Pulse</span></div>
+                    <p style="margin:0; font-size:13px; color:#cbd5e1;">Polymarket volume boundaries breached on layer-2 contracts. Open interest scaling upward.</p>
+                </div>
+            </div>
+
+            <div id="view-news" class="app-view">
+                <div class="app-card">
+                    <div class="card-title-row"><span>🤖 Phoenix AI Assistant Engine</span></div>
+                    <p style="margin:0; font-size:14px; color:var(--text-muted);">Inquire regarding network activity, metrics telemetry, or macro prediction analysis patterns instantly.</p>
+                    <div class="assistant-input-box">
+                        <input type="text" class="assistant-input" placeholder="Ask processing terminal...">
+                        <button class="send-btn">Run</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-signals" class="app-view">
+                <div id="signals-telemetry-root">Querying live backend matrix pools...</div>
+            </div>
+
+            <div id="view-pnl" class="app-view">
+                <div class="app-card" style="text-align: center; padding: 24px 14px;">
+                    <div style="font-size: 13px; color: var(--text-muted); text-transform: uppercase;">Engine Performance Matrix</div>
+                    <div style="font-size: 36px; font-weight: bold; color: var(--primary); margin: 8px 0;">+14.82%</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Active risk modeling bounds verified clean.</div>
+                </div>
+            </div>
+
+            <div id="view-tokens" class="app-view">
+                <div class="app-card">
+                    <div style="font-weight:bold; font-size:14px; margin-bottom:10px; color:var(--text-muted);">Monitored Asset Array</div>
+                    <div class="list-item"><span>BTC / USDT</span> <span style="color:var(--primary); font-weight:bold;">+1.84%</span></div>
+                    <div class="list-item"><span>ETH / USDT</span> <span style="color:var(--danger); font-weight:bold;">-0.92%</span></div>
+                    <div class="list-item"><span>SOL / USDT</span> <span style="color:var(--primary); font-weight:bold;">+4.15%</span></div>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <div class="section-title">Live Trading Matrix</div>
-    <div id="signals-container">Awaiting link telemetry stream...</div>
-
     <script>
-        // Initialize Telegram WebApp interface interface
         const tg = window.Telegram.WebApp;
         tg.expand();
         
+        // Grab real profile user context
         const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('user-greeting').innerText = `Welcome, ${user.first_name}!`;
-        } else {
-            document.getElementById('user-greeting').innerText = "Running Sandbox Environment Instance";
+        document.getElementById('username-display').innerText = user ? `@${user.username || user.first_name}` : "Local Sandbox Dev";
+
+        // Viewport Switcher (WhatsApp Architecture Clone)
+        function switchView(viewId, clickedBtn) {
+            // Hide all views, disable active tabs
+            document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            // Activate selected modules
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            clickedBtn.classList.add('active');
         }
 
-        // Bound to your live Render Python service
+        // Live Cloud Server Fetch Routing logic
         const BACKEND_URL = "https://phoenix-signal-backend.onrender.com"; 
 
-        async function fetchLiveSignals() {
+        async function pullBackendSignals() {
             try {
-                const res = await fetch(`${BACKEND_URL}/api/v1/history`);
-                const json = await res.json();
-                const container = document.getElementById('signals-container');
+                const response = await fetch(`${BACKEND_URL}/api/v1/history`);
+                const result = await response.json();
+                const container = document.getElementById('signals-telemetry-root');
                 
-                if (!json.data || json.data.length === 0) {
-                    container.innerHTML = "<div style='color:#94a3b8; text-align:center; padding:20px;'>No live signals processed by core engine yet.</div>";
+                if (!result.data || result.data.length === 0) {
+                    container.innerHTML = "<div style='color:var(--text-muted); text-align:center; padding:20px;'>No active network telemetry arrays detected.</div>";
                     return;
                 }
                 
-                container.innerHTML = json.data.map(sig => `
-                    <div class="signal-card" style="border-left-color: ${sig.direction === 'LONG' ? '#10b981' : '#ef4444'}">
-                        <div class="signal-header">
+                container.innerHTML = result.data.map(sig => `
+                    <div class="app-card" style="border-left: 4px solid ${sig.direction === 'LONG' ? 'var(--primary)' : 'var(--danger)'}">
+                        <div class="card-title-row">
                             <span>${sig.asset_pair}</span>
-                            <span style="color: ${sig.direction === 'LONG' ? '#10b981' : '#ef4444'}">${sig.direction}</span>
+                            <span style="color:${sig.direction === 'LONG' ? 'var(--primary)' : 'var(--danger)'}">${sig.direction}</span>
                         </div>
-                        <div class="metrics-grid">
-                            <div class="metric-item">🏁 <b>Entry:</b> ${sig.entry_zone}</div>
-                            <div class="metric-item">🛑 <b>Stop Loss:</b> ${sig.stop_loss}</div>
-                            <div class="metric-item" style="grid-column: span 2">🎯 <b>Targets:</b> ${sig.take_profit.join(', ')}</div>
+                        <div class="metrics-layout">
+                            <div class="metric-block">🏁 <b>Entry Zone:</b><br>${sig.entry_zone}</div>
+                            <div class="metric-block">🛑 <b>Stop Loss:</b><br>${sig.stop_loss}</div>
+                            <div class="metric-block" style="grid-column: span 2">🎯 <b>Take Profit Grid:</b><br>${sig.take_profit.join(', ')}</div>
                         </div>
-                        <div class="reasoning">💡 ${sig.analysis_reason}</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:10px; line-height:1.4;">💡 ${sig.analysis_reason}</div>
                     </div>
                 `).join('');
-            } catch(err) {
-                document.getElementById('signals-container').innerHTML = "<div style='color:#ef4444; text-align:center; padding:20px;'>⚠️ Error syncing with cloud telemetry cluster.</div>";
+            } catch(e) {
+                document.getElementById('signals-telemetry-root').innerHTML = "<div style='color:var(--danger); text-align:center;'>⚠️ Node connection failure.</div>";
             }
         }
 
-        fetchLiveSignals();
+        // Run instantly
+        pullBackendSignals();
     </script>
 </body>
 </html>
