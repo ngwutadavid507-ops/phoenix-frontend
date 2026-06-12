@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Core AI - Mini App Dashboard</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #0b0e14;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
+        }
+        .header-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 { margin: 0; font-size: 22px; color: #10b981; text-transform: uppercase; }
+        .status-badge {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin: 20px 0 10px 0; }
+        .signal-card {
+            background-color: #1e293b;
+            border-left: 5px solid #10b981;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .signal-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 18px; }
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 14px; color: #cbd5e1; }
+        .metric-item { background-color: #0f172a; padding: 8px; border-radius: 4px; }
+        .reasoning { font-size: 13px; color: #94a3b8; font-style: italic; margin-top: 12px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <div class="header-card">
+        <h1>🦅 Phoenix Core AI</h1>
+        <div id="user-greeting" style="margin-top:8px; color:#cbd5e1;">Synchronizing User Stream...</div>
+        <span class="status-badge">🟢 CLOUD CLUSTER ONLINE</span>
+    </div>
+
+    <div class="section-title">Live Trading Matrix</div>
+    <div id="signals-container">Awaiting link telemetry stream...</div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('user-greeting').innerText = `Welcome, ${user.first_name}!`;
+        } else {
+            document.getElementById('user-greeting').innerText = "Running Sandbox Environment Instance";
+        }
+
+        // Default to a temporary public dummy data loop so it loads beautifully before backend link
+        async function fetchLiveSignals() {
+            const container = document.getElementById('signals-container');
+            container.innerHTML = `
+                <div class="signal-card" style="border-left-color: #10b981">
+                    <div class="signal-header">
+                        <span>BTC/USDT</span>
+                        <span style="color: #10b981">LONG</span>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-item">🏁 <b>Entry:</b> 64500-65200</div>
+                        <div class="metric-item">🛑 <b>Stop Loss:</b> 62000</div>
+                        <div class="metric-item" style="grid-column: span 2">🎯 <b>Targets:</b> 68000, 71000</div>
+                    </div>
+                    <div class="reasoning">💡 System online. Frontend is ready to bind with your local Termux backend endpoints!</div>
+                </div>
+            `;
+        }
+
+        fetchLiveSignals();
+    </script>
+</body>
+</html>
