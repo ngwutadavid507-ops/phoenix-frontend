@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0b0e14">
-    <meta name="description" content="Phoenix Trading Dashboard - Real-time signals and P&L tracking">
-    <title>Phoenix Trading Dashboard</title>
+    <title>Phoenix Digital Platform</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -13,382 +12,188 @@
             --bg-surface: #161b22;
             --bg-card: #21262d;
             --primary: #10b981;
-            --primary-glow: rgba(16, 185, 129, 0.15);
             --text-main: #ffffff;
             --text-muted: #8b949e;
             --danger: #f85149;
             --warning: #f0883e;
-            --ai-bubble: #30363d;
-            --user-bubble: #0e4429;
             --border: #30363d;
+            --ai-bubble: #21262d;
+            --user-bubble: #0e4429;
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark); color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             overflow: hidden;
         }
 
-        .app-shell {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-        }
-
+        .app-shell { display: flex; flex-direction: column; width: 100%; height: 100%; }
+        
         .app-header {
             background-color: var(--bg-surface);
             padding: 14px 16px 0 16px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; text-transform: uppercase; }
+        .user-tag { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; }
 
-        .brand {
-            font-size: 19px;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: 0.5px;
-        }
-
-        .user-tag {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-family: 'Monaco', 'Courier New', monospace;
-        }
-
+        /* The Exact 5 Primary Tabs Bar */
         .tabs-row {
-            display: flex;
-            margin-top: 10px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            gap: 4px;
+            display: flex; margin-top: 12px; overflow-x: auto;
+            scrollbar-width: none; gap: 6px;
         }
-
-        .tabs-row::-webkit-scrollbar {
-            display: none;
-        }
-
+        .tabs-row::-webkit-scrollbar { display: none; }
         .tab-item {
-            flex: 0 0 auto;
-            text-align: center;
-            padding: 12px 14px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            cursor: pointer;
-            white-space: nowrap;
-            position: relative;
-            transition: color 0.2s ease;
-            border: none;
-            background: none;
+            flex: 1; text-align: center; padding: 12px 0; font-size: 11px; font-weight: 700;
+            color: var(--text-muted); text-transform: uppercase; cursor: pointer;
+            border: none; background: none; position: relative; transition: color 0.2s;
         }
-
-        .tab-item:hover { color: var(--text-main); }
         .tab-item.active { color: var(--primary); }
-
         .tab-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background-color: var(--primary);
-            border-radius: 2px 2px 0 0;
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background-color: var(--primary); border-radius: 2px 2px 0 0;
         }
 
-        .view-viewport {
-            flex: 1;
-            overflow: hidden;
-            position: relative;
+        /* Nested Secondary Internal Tabs Layout */
+        .nested-tab-bar {
+            display: flex; background: rgba(0,0,0,0.2); border-radius: 8px;
+            padding: 4px; margin-bottom: 14px; gap: 4px; border: 1px solid var(--border);
         }
+        .sub-tab-item {
+            flex: 1; text-align: center; padding: 8px 0; font-size: 11px; font-weight: 700;
+            color: var(--text-muted); text-transform: uppercase; border: none; background: none;
+            cursor: pointer; border-radius: 6px; transition: all 0.2s;
+        }
+        .sub-tab-item.active { background: var(--primary); color: #fff; }
 
+        .view-viewport { flex: 1; overflow: hidden; position: relative; }
         .view-pane {
-            display: none;
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 12px 16px;
-            animation: fadeIn 0.2s ease;
+            display: none; width: 100%; height: 100%;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px;
         }
+        .view-pane.active { display: flex; flex-direction: column; }
 
-        .view-pane.active {
-            display: flex;
-            flex-direction: column;
-        }
+        /* Nested Section Panes Wrapper */
+        .nested-content-box { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .sub-pane { display: none; width: 100%; height: 100%; overflow-y: auto; }
+        .sub-pane.active { display: flex; flex-direction: column; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* Modular Cards */
+        .phoenix-card {
+            background-color: var(--bg-surface); border-radius: 12px;
+            padding: 16px; margin-bottom: 14px; border: 1px solid var(--border);
         }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .news-badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(240,136,62,0.15); color: var(--warning); }
 
-        /* --- UPGRADED DISTINCT SIGNALS TAB CLASS DESIGNS --- */
-        .signal-pro-matrix-title {
-            padding: 4px 0 12px 0;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-muted);
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
+        /* Signals System Elements */
+        .signal-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin: 10px 0;
         }
+        .grid-item { font-size: 12px; color: var(--text-muted); }
+        .grid-item b { color: var(--text-main); display: block; font-size: 13px; margin-top: 2px; }
+        .side-badge { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+        .side-badge.long { background: rgba(16,185,129,0.15); color: var(--primary); }
+        .side-badge.short { background: rgba(248,81,73,0.15); color: var(--danger); }
+        .meter-bg { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin: 8px 0; overflow: hidden; }
+        .meter-fill { height: 100%; background: linear-gradient(90deg, var(--warning), var(--primary)); }
 
-        .signal-pro-card {
-            background: var(--bg-surface);
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            position: relative;
-        }
+        /* Isolated Chat Layout Components */
+        .chat-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 70px; }
+        .msg-bubble { max-width: 85%; padding: 12px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.45; word-wrap: break-word; }
+        .msg-bubble.ai { background-color: var(--ai-bubble); align-self: flex-start; border-top-left-radius: 2px; border: 1px solid rgba(255,255,255,0.02); }
+        .msg-bubble.user { background-color: var(--user-bubble); align-self: flex-end; border-top-right-radius: 2px; }
+        .chat-bar-fixed { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; gap: 8px; background: var(--bg-surface); padding: 6px 10px; border-radius: 20px; border: 1px solid var(--border); }
+        .chat-input { flex: 1; background: none; border: none; color: var(--text-main); font-size: 13.5px; outline: none; }
+        .chat-btn { background: var(--primary); color: #fff; border: none; padding: 6px 14px; border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer; }
 
-        .signal-pro-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
+        /* Pair Display Row Elements */
+        .pair-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .pair-row:last-child { border: none; }
+        .trend-up { color: var(--primary); font-weight: 700; }
+        .trend-down { color: var(--danger); font-weight: 700; }
 
-        .signal-pro-pair {
-            font-size: 17px;
-            font-weight: 800;
-            letter-spacing: 0.2px;
-        }
-
-        .signal-pro-badge {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 6px;
-            text-transform: uppercase;
-        }
-
-        .signal-pro-badge.long {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: var(--primary);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .signal-pro-badge.short {
-            background-color: rgba(248, 81, 73, 0.15);
-            color: var(--danger);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-        }
-
-        .signal-pro-meter-bg {
-            width: 100%;
-            height: 5px;
-            background-color: #21262d;
-            border-radius: 3px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-
-        .signal-pro-meter-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--warning), var(--primary));
-            border-radius: 3px;
-            transition: width 0.4s ease;
-        }
-
-        .signal-pro-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.15);
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        .signal-pro-data-item {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .signal-pro-data-item b {
-            color: var(--text-main);
-            display: block;
-            font-size: 13px;
-            margin-top: 2px;
-        }
-
-        .signal-pro-reason {
-            margin-top: 12px;
-            font-size: 12.5px;
-            line-height: 1.4;
-            color: #c9d1d9;
-            font-style: italic;
-            border-left: 3px solid var(--border);
-            padding-left: 8px;
-        }
-
-        /* --- CHAT VIEW INTERFACE STYLES --- */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-bottom: 80px;
-        }
-
-        .chat-empty {
-            text-align: center;
-            margin: auto;
-            color: var(--text-muted);
-            padding: 20px;
-        }
-
-        .chat-empty span {
-            font-size: 40px;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .msg-bubble {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 14px;
-            font-size: 14px;
-            line-height: 1.5;
-            word-wrap: break-word;
-            word-break: break-word;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .msg-bubble.ai {
-            background-color: var(--ai-bubble);
-            align-self: flex-start;
-            border-top-left-radius: 2px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .msg-bubble.user {
-            background-color: var(--user-bubble);
-            align-self: flex-end;
-            border-top-right-radius: 2px;
-            color: #fff;
-        }
-
-        .chat-input-wrapper {
-            position: absolute;
-            bottom: 12px;
-            left: 16px;
-            right: 16px;
-            background-color: var(--bg-dark);
-        }
-
-        .chat-input-bar {
-            display: flex;
-            gap: 8px;
-            background-color: var(--bg-surface);
-            padding: 8px 12px;
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            align-items: center;
-        }
-
-        .chat-field {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-main);
-            padding: 6px 4px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .chat-field::placeholder {
-            color: var(--text-muted);
-        }
-
-        .chat-send-btn {
-            background-color: var(--primary);
-            color: #fff;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 16px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .chat-send-btn:active {
-            opacity: 0.8;
-        }
+        .loading-text { text-align: center; margin: auto; color: var(--text-muted); font-size: 13px; }
     </style>
 </head>
 <body>
 
     <div class="app-shell">
-        <!-- Top App Header Context -->
         <header class="app-header">
             <div class="header-top">
-                <div class="brand">PHOENIX ENGINE</div>
-                <div class="user-tag" id="user-display">CORE_NODE_IDX</div>
+                <div class="brand">Phoenix Platform</div>
+                <div class="user-tag" id="user-display">@CHIDIBLESS10</div>
             </div>
             
-            <!-- Sliding Navigation Matrix -->
+            <!-- Standard 5-Tab Layout Interface Rows -->
             <div class="tabs-row">
-                <button class="tab-item active" onclick="switchTab('signals')">Signals Matrix</button>
-                <button class="tab-item" onclick="switchTab('ai-chat')">AI Enquiries</button>
+                <button class="tab-item active" onclick="switchTab('polymarket')">Polymarket</button>
+                <button class="tab-item" onclick="switchTab('news-ai')">News/AI</button>
+                <button class="tab-item" onclick="switchTab('signals')">Signals</button>
+                <button class="tab-item" onclick="switchTab('pnl')">P&L</button>
+                <button class="tab-item" onclick="switchTab('pairs')">Pairs</button>
             </div>
         </header>
 
-        <!-- Dynamic Content Window Panels -->
         <main class="view-viewport">
             
-            <!-- TAB 1: UPGRADED DISTINCT SIGNALS PRO VIEW -->
-            <div id="pane-signals" class="view-pane active">
-                <div class="signal-pro-matrix-title">Live Algorithmic Telemetry Matrix</div>
-                <div id="signals-pro-root">
-                    <div class="chat-empty">Loading active data frames...</div>
+            <!-- VIEW 1: POLYMARKET -->
+            <div id="pane-polymarket" class="view-pane active">
+                <div id="poly-root"></div>
+            </div>
+
+            <!-- VIEW 2: COMBINED NEWS/AI SCREEN (CONTAINS TWO NESTED SUB-TABS) -->
+            <div id="pane-news-ai" class="view-pane" style="overflow:hidden;">
+                <!-- Internal Secondary Tab Links Container -->
+                <div class="nested-tab-bar">
+                    <button class="sub-tab-item active" id="btn-sub-news" onclick="switchSubTab('news')">Live News Feed</button>
+                    <button class="sub-tab-item" id="btn-sub-ai" onclick="switchSubTab('ai')">AI Enquiries</button>
+                </div>
+
+                <div class="nested-content-box">
+                    <!-- Internal Sub-Section 1: Live News -->
+                    <div id="sub-pane-news" class="sub-pane active">
+                        <div id="news-root"></div>
+                    </div>
+
+                    <!-- Internal Sub-Section 2: AI Enquiries Chat Shell -->
+                    <div id="sub-pane-ai" class="sub-pane">
+                        <div class="chat-container" id="chat-scroller">
+                            <div class="msg-bubble ai">🤖 Phoenix Terminal Online. Ask any unconstrained question on project utilities, token metrics, $FIFA/doge sentiment data, or active team backing pools.</div>
+                        </div>
+                        <div class="chat-bar-fixed">
+                            <input type="text" class="chat-input" id="query-field" placeholder="Is investing in doge or $FIFA a good decision?..." onkeypress="if(event.key==='Enter') executeAiQuery()">
+                            <button class="chat-btn" onclick="executeAiQuery()">Send</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- TAB 2: ADVANCED UNSTRUCTURED AI QUERY ENGINE -->
-            <div id="pane-ai-chat" class="view-pane">
-                <div class="chat-container" id="chat-scroller">
-                    <div class="chat-empty" id="chat-empty-state">
-                        <span>🤖</span>
-                        Ask anything about crypto projects, market trends, token backing entities, or macro HODL strategy configurations. Responses update dynamically.
-                    </div>
+            <!-- VIEW 3: LIVE PRO SIGNALS -->
+            <div id="pane-signals" class="view-pane">
+                <div id="signals-root"></div>
+            </div>
+
+            <!-- VIEW 4: ENGINE YIELD RATIO (P&L) -->
+            <div id="pane-pnl" class="view-pane">
+                <div class="phoenix-card" style="text-align: center; margin-top: 20px;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;">Engine Performance Matrix</div>
+                    <div id="pnl-value-display" style="font-size: 38px; font-weight: 900; color: var(--primary); margin: 14px 0;">+14.82%</div>
+                    <div id="pnl-desc-display" style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Syncing localized core networks...</div>
                 </div>
-                
-                <div class="chat-input-wrapper">
-                    <div class="chat-input-bar">
-                        <input type="text" class="chat-field" id="query-input" placeholder="Is investing in doge or $FIFA a good choice?..." onkeypress="handleKeyPress(event)">
-                        <button class="chat-send-btn" onclick="submitEnquiry()">Send</button>
-                    </div>
+            </div>
+
+            <!-- VIEW 5: MONITORED ASSET ARRAY -->
+            <div id="pane-pairs" class="view-pane">
+                <div class="phoenix-card">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">Monitored Asset Array</div>
+                    <div id="pairs-root"></div>
                 </div>
             </div>
 
@@ -396,152 +201,185 @@
     </div>
 
     <script>
-        // Production Backend Environment Config Gateway
-        const BASE_API = "https://phoenix-backend-pdrh.onrender.com"; 
+        // Update to your direct Render backend url string
+        const CORE_API = "https://phoenix-backend-pdrh.onrender.com";
 
-        // Initialize Telegram WebApp interface safely
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.expand();
-            tg.ready();
-            if (tg.initDataUnsafe?.user?.username) {
-                document.getElementById('user-display').innerText = `@${tg.initDataUnsafe.user.username.toUpperCase()}`;
+        // Telegram Frame Activation Context
+        const webappEnv = window.Telegram?.WebApp;
+        if (webappEnv) {
+            webappEnv.expand();
+            webappEnv.ready();
+            if (webappEnv.initDataUnsafe?.user?.username) {
+                document.getElementById('user-display').innerText = `@${webappEnv.initDataUnsafe.user.username.toUpperCase()}`;
             }
         }
 
-        // Structural UI View Tab Switcher Configuration
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-item').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.view-pane').forEach(pane => pane.classList.remove('active'));
-
-            if(tabId === 'signals') {
-                document.querySelectorAll('.tab-item')[0].classList.add('active');
-                document.getElementById('pane-signals').classList.add('active');
-                fetchSignalsMatrix();
-            } else if(tabId === 'ai-chat') {
-                document.querySelectorAll('.tab-item')[1].classList.add('active');
-                document.getElementById('pane-ai-chat').classList.add('active');
-                scrollToBottom();
-            }
-        }
-
-        // Fetch and Render Engine for the High-Density Signal Grid
-        async function fetchSignalsMatrix() {
-            try {
-                const response = await fetch(`${BASE_API}/api/v1/history`);
-                if (!response.ok) throw new Error("Data retrieval frame failure");
-                const resData = await response.json();
-                
-                const rootElement = document.getElementById('signals-pro-root');
-                if (!resData.data || resData.data.length === 0) {
-                    rootElement.innerHTML = `<div class="chat-empty">No trading telemetry signals actively broadcasted.</div>`;
-                    return;
-                }
-
-                rootElement.innerHTML = resData.data.map(item => {
-                    const sideClass = item.direction.toLowerCase() === 'long' ? 'long' : 'short';
-                    const confidencePercentage = Math.round(item.confidence_score * 100);
-                    
-                    return `
-                        <div class="signal-pro-card">
-                            <div class="signal-pro-header">
-                                <span class="signal-pro-pair">${item.asset_pair}</span>
-                                <span class="signal-pro-badge ${sideClass}">${item.direction}</span>
-                            </div>
-                            
-                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
-                                <span>Confidence Vector</span>
-                                <span>${confidencePercentage}%</span>
-                            </div>
-                            <div class="signal-pro-meter-bg">
-                                <div class="signal-pro-meter-fill" style="width: ${confidencePercentage}%;"></div>
-                            </div>
-
-                            <div class="signal-pro-grid">
-                                <div class="signal-pro-data-item">ENTRY ZONE <b>${item.entry_zone}</b></div>
-                                <div class="signal-pro-data-item">STOP LOSS <b style="color: var(--danger);">${item.stop_loss}</b></div>
-                                <div class="signal-pro-data-item" style="grid-column: span 2; margin-top: 4px;">
-                                    TARGET TARGETS <b>${item.take_profit.join('  |  ')}</b>
-                                </div>
-                            </div>
-
-                            <div class="signal-pro-reason">
-                                ${item.analysis_reason}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (err) {
-                console.error("Matrix compilation error:", err);
-                document.getElementById('signals-pro-root').innerHTML = `
-                    <div class="chat-empty" style="color: var(--danger);">
-                        ⚠️ Connection out of alignment. Failed to synchronize market telemetry data.
-                    </div>`;
-            }
-        }
-
-        // Advanced AI Real-time Enquiry Core Submission Router
-        async function submitEnquiry() {
-            const inputField = document.getElementById('query-input');
-            const promptText = inputField.value.trim();
-            if (!promptText) return;
-
-            const chatScroller = document.getElementById('chat-scroller');
-            const emptyState = document.getElementById('chat-empty-state');
+        // Global Parent 5-Tab View Router
+        function switchTab(targetId) {
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.view-pane').forEach(el => el.classList.remove('active'));
             
-            if (emptyState) emptyState.remove();
+            const eventBtn = Array.from(document.querySelectorAll('.tab-item')).find(b => b.innerText.toLowerCase() === targetId.replace('-','/').toLowerCase() || b.innerText.toLowerCase() === targetId.toLowerCase());
+            if(eventBtn) eventBtn.classList.add('active');
+            
+            const dynamicPane = document.getElementById(`pane-${targetId}`);
+            if(dynamicPane) dynamicPane.classList.add('active');
 
-            // Append User prompt layout cleanly
-            chatScroller.innerHTML += `<div class="msg-bubble user">${promptText}</div>`;
-            inputField.value = "";
-            scrollToBottom();
+            // Resource allocation loaders depending on parent tab activation
+            if(targetId === 'polymarket') fetchPolymarketData();
+            if(targetId === 'news-ai') switchSubTab('news'); // default focus internal sub-tab
+            if(targetId === 'signals') fetchSignalsData();
+            if(targetId === 'pnl') fetchPerformanceData();
+            if(targetId === 'pairs') fetchPairsData();
+        }
 
-            // Append loading indicator placeholder configuration
-            const placeholderId = "loading-" + Date.now();
-            chatScroller.innerHTML += `<div class="msg-bubble ai" id="${placeholderId}">Phoenix Analyst parsing data arrays...</div>`;
-            scrollToBottom();
+        // Nested Secondary Sub-Tab Swapper
+        function switchSubTab(subId) {
+            document.querySelectorAll('.sub-tab-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sub-pane').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`btn-sub-${subId}`).classList.add('active');
+            document.getElementById(`sub-pane-${subId}`).classList.add('active');
+
+            if(subId === 'news') fetchNewsFeed();
+            if(subId === 'ai') scrollChatBottom();
+        }
+
+        // FETCH ROUTE 1: POLYMARKET ENGINE
+        async function fetchPolymarketData() {
+            const root = document.getElementById('poly-root');
+            root.innerHTML = `<div class="loading-text">Loading Prediction Telemetry Framework...</div>`;
+            try {
+                const r = await fetch(`${CORE_API}/api/v1/polymarket`);
+                const d = await r.json();
+                root.innerHTML = `
+                    <div class="phoenix-card">
+                        <div class="card-header-flex">
+                            <span style="font-weight:700; font-size:14px; color:#a2b2ee;">🔮 ${d.global_election.title}</span>
+                            <span style="color:var(--primary); font-size:12px; font-weight:700;">${d.global_election.certainty}</span>
+                        </div>
+                        <div style="font-size:12.5px; color:var(--text-muted); line-height:1.5;">${d.global_election.description}</div>
+                    </div>`;
+            } catch (e) {
+                root.innerHTML = `<div class="loading-text" style="color:var(--danger)">Connection Error. Verify runtime status.</div>`;
+            }
+        }
+
+        // FETCH ROUTE 2: NESTED NEWS FIELD DATA FEED
+        async function fetchNewsFeed() {
+            const root = document.getElementById('news-root');
+            root.innerHTML = `<div class="loading-text">Parsing Market Intelligence Pulse...</div>`;
+            try {
+                const r = await fetch(`${CORE_API}/api/v1/news`);
+                const res = await r.json();
+                root.innerHTML = res.feed.map(item => `
+                    <div class="phoenix-card">
+                        <div class="card-header-flex">
+                            <span style="font-weight:700; font-size:14px; color:var(--text-main)">📰 ${item.title}</span>
+                            <span class="news-badge">${item.badge}</span>
+                        </div>
+                        <div style="font-size:12.5px; color:var(--text-muted); line-height:1.5;">${item.description}</div>
+                    </div>`).join('');
+            } catch (e) {
+                root.innerHTML = `<div class="loading-text" style="color:var(--danger)">Failed to synchronize live market intelligence.</div>`;
+            }
+        }
+
+        // FETCH ROUTE 3: NESTED AI MESSAGE EXECUTION QUERY
+        async function executeAiQuery() {
+            const f = document.getElementById('query-field');
+            const p = f.value.trim();
+            if(!p) return;
+
+            const box = document.getElementById('chat-scroller');
+            box.innerHTML += `<div class="msg-bubble user">${p}</div>`;
+            f.value = "";
+            scrollChatBottom();
+
+            const loadId = "ai-" + Date.now();
+            box.innerHTML += `<div class="msg-bubble ai" id="${loadId}">Phoenix Data Node aggregating information matrices...</div>`;
+            scrollChatBottom();
 
             try {
-                const replyResponse = await fetch(`${BASE_API}/api/v1/chat`, {
+                const res = await fetch(`${CORE_API}/api/v1/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: promptText })
+                    body: JSON.stringify({ prompt: p })
                 });
-
-                if (!replyResponse.ok) throw new Error("AI engine stream disconnection");
-                const dataOut = await replyResponse.json();
-                
-                // Replace loading block with factual context
-                const containerNode = document.getElementById(placeholderId);
-                if (containerNode) {
-                    containerNode.innerHTML = dataOut.reply.replace(/\n/g, "<br>");
-                }
-            } catch (error) {
-                console.error("AI node exception:", error);
-                const containerNode = document.getElementById(placeholderId);
-                if (containerNode) {
-                    containerNode.style.color = "var(--danger)";
-                    containerNode.innerText = "Error syncing with AI query routing clusters. Please re-verify core connectivity.";
-                }
+                const out = await res.json();
+                document.getElementById(loadId).innerHTML = out.reply.replace(/\n/g, "<br>");
+            } catch (err) {
+                document.getElementById(loadId).innerHTML = `<span style="color:var(--danger)">Core data node processing failure. Verify backend allocation.</span>`;
             }
-            scrollToBottom();
+            scrollChatBottom();
         }
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                submitEnquiry();
+        // FETCH ROUTE 4: PRO SIGNALS ENGINE
+        async function fetchSignalsData() {
+            const root = document.getElementById('signals-root');
+            root.innerHTML = `<div class="loading-text">Loading Active Signal Pipelines...</div>`;
+            try {
+                const r = await fetch(`${CORE_API}/api/v1/history`);
+                const res = await r.json();
+                root.innerHTML = res.data.map(item => {
+                    const side = item.direction.toLowerCase() === 'long' ? 'long' : 'short';
+                    const score = Math.round(item.confidence_score * 100);
+                    return `
+                        <div class="phoenix-card">
+                            <div class="card-header-flex">
+                                <span style="font-size:16px; font-weight:800;">${item.asset_pair}</span>
+                                <span class="side-badge ${side}">${item.direction}</span>
+                            </div>
+                            <div style="display:flex; justify-content:between; font-size:11px; color:var(--text-muted);">
+                                <span style="flex:1">Signal Validity Confidence Index</span>
+                                <span>${score}%</span>
+                            </div>
+                            <div class="meter-bg"><div class="meter-fill" style="width:${score}%"></div></div>
+                            <div class="signal-grid">
+                                <div class="grid-item">ENTRY ZONE<b>${item.entry_zone}</b></div>
+                                <div class="grid-item">STOP LOSS<b style="color:var(--danger)">${item.stop_loss}</b></div>
+                                <div class="grid-item" style="grid-column: span 2; margin-top:4px;">TARGET TARGETS<b>${item.take_profit.join('  |  ')}</b></div>
+                            </div>
+                            <div style="font-size:12px; color:#c9d1d9; font-style:italic; border-left:2px solid var(--border); padding-left:6px; margin-top:10px;">"${item.analysis_reason}"</div>
+                        </div>`;
+                }).join('');
+            } catch (e) {
+                root.innerHTML = `<div class="loading-text" style="color:var(--danger)">Failed to synchronize signal stream matrix.</div>`;
             }
         }
 
-        function scrollToBottom() {
+        // FETCH ROUTE 5: RUNTIME METRIC (P&L) PERFORMANCE
+        async function fetchPerformanceData() {
+            try {
+                const r = await fetch(`${CORE_API}/api/v1/performance`);
+                const d = await r.json();
+                document.getElementById('pnl-value-display').innerText = d.matrix_value;
+                document.getElementById('pnl-desc-display').innerText = d.status_message;
+            } catch(e) {
+                document.getElementById('pnl-desc-display').innerText = "Yield index evaluation pipeline offline.";
+            }
+        }
+
+        // FETCH ROUTE 6: MONITORED TOKEN RUNTIME MATRIX
+        async function fetchPairsData() {
+            const root = document.getElementById('pairs-root');
+            root.innerHTML = `<div class="loading-text">Synchronizing Asset Array...</div>`;
+            try {
+                const r = await fetch(`${CORE_API}/api/v1/pairs`);
+                const d = await r.json();
+            } catch (e) {
+                root.innerHTML = `<div class="loading-text" style="color:var(--danger)">Failed to fetch monitored pairs.</div>`;
+            }
+        }
+
+        function scrollChatBottom() {
             const scroller = document.getElementById('chat-scroller');
-            scroller.scrollTop = scroller.scrollHeight;
+            if(scroller) scroller.scrollTop = scroller.scrollHeight;
         }
 
-        // Frame initial boot sequencing load lines
         window.addEventListener('DOMContentLoaded', () => {
-            fetchSignalsMatrix();
+            // initial loaders
+            fetchPolymarketData();
         });
     </script>
 </body>
