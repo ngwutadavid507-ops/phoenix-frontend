@@ -6,155 +6,194 @@
     <title>Phoenix Terminal</title>
     <style>
         :root {
-            --bg: #0b0e14;
-            --surface: #131720;
-            --card: #1a2030;
-            --border: #252d3d;
-            --primary: #f7a600;
-            --primary-dim: rgba(247,166,0,0.1);
-            --green: #26d97f;
-            --green-dim: rgba(38,217,127,0.1);
-            --red: #f0465a;
-            --red-dim: rgba(240,70,90,0.1);
-            --purple: #a78bfa;
-            --text: #e8eaf0;
-            --muted: #6b7a99;
-            --muted2: #3d4a66;
+            --bg: #0b0e14; --surface: #131720; --card: #1a2030;
+            --border: #252d3d; --primary: #f7a600; --pdim: rgba(247,166,0,0.1);
+            --green: #26d97f; --gdim: rgba(38,217,127,0.1);
+            --red: #f0465a; --rdim: rgba(240,70,90,0.1);
+            --purple: #a78bfa; --text: #e8eaf0; --muted: #6b7a99; --muted2: #3d4a66;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+        html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
         .app { display: flex; flex-direction: column; height: 100vh; }
 
-        /* ── HEADER ── */
-        .hdr { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 16px 0; flex-shrink: 0; }
-        .hdr-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        /* HEADER */
+        .hdr { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px 0; flex-shrink: 0; }
+        .hdr-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .brand { font-size: 15px; font-weight: 900; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; }
-        .live { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: var(--green); letter-spacing: 0.5px; }
+        .live { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: var(--green); }
         .ldot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 1.4s infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-        .tabs { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; }
+        .tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
         .tabs::-webkit-scrollbar { display: none; }
-        .tab { flex-shrink: 0; padding: 10px 16px; font-size: 11px; font-weight: 700; color: var(--muted); background: none; border: none; cursor: pointer; position: relative; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+        .tab { flex-shrink: 0; padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--muted); background: none; border: none; cursor: pointer; position: relative; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
         .tab.on { color: var(--primary); }
         .tab.on::after { content:''; position:absolute; bottom:0; left:8px; right:8px; height:2px; background:var(--primary); border-radius:2px; }
 
-        /* ── PANES ── */
+        /* PANES */
         .body { flex: 1; overflow: hidden; position: relative; }
-        .pane { position: absolute; inset: 0; overflow-y: auto; padding: 14px; display: none; flex-direction: column; gap: 10px; }
+        .pane { position: absolute; inset: 0; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 10px; }
         .pane.on { display: flex; }
-        .pane-raw { position: absolute; inset: 0; overflow-y: auto; display: none; flex-direction: column; }
+        .pane-raw { position: absolute; inset: 0; display: none; flex-direction: column; overflow: hidden; }
         .pane-raw.on { display: flex; }
 
-        /* ── LOADING / STATES ── */
+        /* STATES */
         .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 60px 20px; }
-        .spin { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .spin { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .load-txt { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; line-height: 1.6; }
-        .empty { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 13px; line-height: 1.8; }
-        .err { text-align: center; padding: 40px 20px; color: var(--red); font-size: 13px; font-weight: 600; line-height: 1.8; }
-        .retry { margin-top: 12px; background: var(--primary); color: #000; border: none; border-radius: 8px; padding: 10px 22px; font-weight: 800; font-size: 12px; cursor: pointer; letter-spacing: 0.5px; }
+        .load-txt { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; line-height: 1.7; }
+        .empty { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+        .err-box { text-align: center; padding: 40px 20px; color: var(--red); font-size: 13px; font-weight: 600; line-height: 1.8; }
+        .retry { margin-top: 12px; background: var(--primary); color: #000; border: none; border-radius: 8px; padding: 10px 22px; font-weight: 800; font-size: 12px; cursor: pointer; }
 
-        /* ── SIGNAL CARD ── */
+        /* SIGNAL CARD */
         .sig-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
         .sig-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
-        .sig-pair { font-size: 20px; font-weight: 900; letter-spacing: 0.5px; }
-        .sig-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-        .dir { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; }
-        .long { background: var(--green-dim); color: var(--green); border: 1px solid rgba(38,217,127,0.2); }
-        .short { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,70,90,0.2); }
-        .lev { font-size: 10px; font-weight: 800; color: var(--primary); background: var(--primary-dim); padding: 3px 8px; border-radius: 4px; }
-
-        .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+        .sig-pair { font-size: 20px; font-weight: 900; }
+        .sig-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+        .sig-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+        .dir { padding: 5px 12px; border-radius: 7px; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; }
+        .long { background: var(--gdim); color: var(--green); border: 1px solid rgba(38,217,127,0.25); }
+        .short { background: var(--rdim); color: var(--red); border: 1px solid rgba(240,70,90,0.25); }
+        .lev-tag { font-size: 10px; font-weight: 800; color: var(--primary); background: var(--pdim); padding: 3px 8px; border-radius: 4px; }
+        .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 10px; }
         .sc { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; }
-        .sc-lbl { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .sc-val { font-size: 14px; font-weight: 800; font-family: 'SF Mono', monospace; }
-        .c-entry { color: var(--text); }
-        .c-sl { color: var(--red); }
-        .c-tp1 { color: #4ade80; }
-        .c-tp2 { color: var(--green); }
-        .c-tp3 { color: var(--primary); }
-        .c-conf { color: var(--primary); font-size: 18px; }
-        .c-rr { color: var(--purple); }
-        .c-score { color: var(--muted); font-size: 12px; }
-
-        .sig-reasons { margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
-        .sig-reasons-title { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-        .reason-item { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 3px; }
-        .reason-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); margin-top: 5px; flex-shrink: 0; }
-
-        .sig-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-        .rsi-bar-wrap { flex: 1; margin-right: 12px; }
+        .sc-l { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .sc-v { font-size: 14px; font-weight: 800; font-family: monospace; }
+        .v-e { color: var(--text); } .v-sl { color: var(--red); }
+        .v-t1 { color: #4ade80; } .v-t2 { color: var(--green); }
+        .v-t3 { color: var(--primary); font-size: 15px; }
+        .v-cf { color: var(--primary); font-size: 18px; }
+        .v-rr { color: var(--purple); }
+        .sig-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 4px; }
+        .rsi-wrap { flex: 1; margin-right: 12px; }
         .rsi-lbl { font-size: 9px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
         .rsi-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-        .rsi-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+        .rsi-fill { height: 100%; border-radius: 2px; }
+        .sig-reasons { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+        .reasons-lbl { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .reason { display: flex; gap: 6px; font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 3px; }
+        .rdot { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); margin-top: 5px; flex-shrink: 0; }
 
-        /* ── PAIRS / SEARCH ── */
-        .search-wrap { padding: 12px 14px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; gap: 8px; }
-        .s-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 13px; font-size: 13px; outline: none; }
-        .s-input:focus { border-color: var(--primary); }
-        .s-input::placeholder { color: var(--muted); }
-        .s-btn { background: var(--primary); color: #000; border: none; border-radius: 10px; padding: 0 18px; font-weight: 900; font-size: 12px; cursor: pointer; letter-spacing: 0.5px; }
-        .s-clear { background: var(--muted2); color: var(--text); border: none; border-radius: 10px; padding: 0 14px; font-weight: 700; font-size: 12px; cursor: pointer; }
-
-        .pair-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border); }
-        .pr-left { display: flex; align-items: center; gap: 10px; }
-        .pr-thumb { width: 32px; height: 32px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+        /* PAIRS */
+        .search-bar { padding: 10px 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+        .s-in { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 13px; font-size: 13px; outline: none; }
+        .s-in:focus { border-color: var(--primary); }
+        .s-in::placeholder { color: var(--muted); }
+        .s-btn { background: var(--primary); color: #000; border: none; border-radius: 10px; padding: 0 16px; font-weight: 900; font-size: 12px; cursor: pointer; }
+        .s-clr { background: var(--muted2); color: var(--text); border: none; border-radius: 10px; padding: 0 12px; font-weight: 700; font-size: 13px; cursor: pointer; }
+        .sec-lbl { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 14px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .pairs-list { flex: 1; overflow-y: auto; }
+        .pair-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+        .pair-row:active { background: var(--card); }
+        .pr-l { display: flex; align-items: center; gap: 10px; }
+        .pr-thumb { width: 32px; height: 32px; border-radius: 50%; background: var(--border); flex-shrink: 0; object-fit: cover; }
         .pr-sym { font-size: 14px; font-weight: 800; }
-        .pr-name { font-size: 11px; color: var(--muted); margin-top: 1px; }
+        .pr-name { font-size: 11px; color: var(--muted); }
         .pr-rank { font-size: 10px; color: var(--muted2); }
-        .pr-right { text-align: right; }
+        .pr-r { text-align: right; }
         .pr-price { font-family: monospace; font-weight: 700; font-size: 14px; }
-        .pr-change { font-size: 12px; font-weight: 700; margin-top: 2px; }
-        .pr-vol { font-size: 10px; color: var(--muted); margin-top: 2px; }
-        .up { color: var(--green); }
-        .dn { color: var(--red); }
+        .pr-chg { font-size: 12px; font-weight: 700; margin-top: 1px; }
+        .pr-vol { font-size: 10px; color: var(--muted); margin-top: 1px; }
+        .up { color: var(--green); } .dn { color: var(--red); }
 
-        /* ── SECTION LABEL ── */
-        .section-lbl { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; padding: 10px 16px 6px; border-bottom: 1px solid var(--border); background: var(--surface); }
+        /* PAIR DETAIL MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; flex-direction: column; }
+        .modal-overlay.hide { display: none; }
+        .modal-hdr { background: var(--surface); padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-title { font-size: 16px; font-weight: 900; }
+        .modal-close { background: var(--muted2); color: var(--text); border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; cursor: pointer; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .detail-stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+        .ds-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+        .ds-row:last-child { border: none; }
+        .ds-lbl { font-size: 12px; color: var(--muted); font-weight: 600; }
+        .ds-val { font-size: 13px; font-weight: 800; font-family: monospace; }
 
-        /* ── TRENDING ── */
-        .trend-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
-        .tr-num { font-size: 12px; font-weight: 800; color: var(--muted); width: 22px; flex-shrink: 0; }
-        .tr-thumb { width: 30px; height: 30px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
-        .tr-name { font-size: 13px; font-weight: 700; }
-        .tr-sym { font-size: 11px; color: var(--muted); margin-top: 1px; }
-        .tr-rank { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 600; }
+        /* LIVE CHART PLACEHOLDER */
+        .chart-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+        .chart-lbl { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .sparkline { display: flex; align-items: flex-end; gap: 2px; height: 60px; }
+        .spark-bar { flex: 1; border-radius: 2px 2px 0 0; min-width: 4px; }
 
-        /* ── PREDICTION ── */
-        .pred-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .pred-q { font-size: 13px; font-weight: 600; line-height: 1.5; flex: 1; }
-        .pred-odds { font-size: 15px; font-weight: 900; color: var(--primary); background: var(--primary-dim); padding: 8px 12px; border-radius: 8px; white-space: nowrap; border: 1px solid rgba(247,166,0,0.2); }
+        /* MODAL CHAT */
+        .modal-chat { background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
+        .modal-chat-lbl { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; padding: 10px 14px 6px; }
+        .modal-msgs { height: 130px; overflow-y: auto; padding: 0 14px 8px; display: flex; flex-direction: column; gap: 6px; }
+        .modal-msg { font-size: 12px; padding: 7px 10px; border-radius: 8px; max-width: 92%; line-height: 1.5; }
+        .mm-u { align-self: flex-end; background: var(--pdim); border: 1px solid rgba(247,166,0,0.2); }
+        .mm-a { align-self: flex-start; background: var(--card); border: 1px solid var(--border); color: var(--muted); }
+        .modal-input-row { display: flex; gap: 8px; padding: 8px 12px 12px; }
+        .modal-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: 12px; outline: none; }
+        .modal-input:focus { border-color: var(--primary); }
+        .modal-send { background: var(--primary); color: #000; border: none; border-radius: 8px; padding: 0 14px; font-weight: 900; font-size: 12px; cursor: pointer; }
 
-        /* ── PERFORMANCE ── */
+        /* NEWS/AI */
+        .subtabs { display: flex; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 4px; gap: 4px; flex-shrink: 0; margin-bottom: 2px; }
+        .stab { flex: 1; text-align: center; padding: 9px; font-size: 11px; font-weight: 800; color: var(--muted); border: none; background: none; cursor: pointer; border-radius: 7px; }
+        .stab.on { background: var(--primary); color: #000; }
+        .sub { display: none; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
+        .sub.on { display: flex; }
+        .news-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+        .news-t { font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 6px; }
+        .news-s { font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; }
+        .trend-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .tr-n { font-size: 11px; color: var(--muted); font-weight: 700; width: 20px; flex-shrink: 0; }
+        .tr-th { width: 28px; height: 28px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+        .tr-nm { font-size: 13px; font-weight: 700; }
+        .tr-sy { font-size: 11px; color: var(--muted); }
+        .tr-rk { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+        /* GLOBAL CHAT */
+        .chat-wrap { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .chat-msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 88%; padding: 10px 13px; border-radius: 12px; font-size: 13px; line-height: 1.6; }
+        .msg-u { align-self: flex-end; background: var(--pdim); border: 1px solid rgba(247,166,0,0.2); }
+        .msg-a { align-self: flex-start; background: var(--card); border: 1px solid var(--border); }
+        .ai-name { font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .chat-bar { padding: 10px 12px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+        .chat-in { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 11px 13px; font-size: 13px; outline: none; }
+        .chat-in:focus { border-color: var(--primary); }
+        .chat-in::placeholder { color: var(--muted); }
+        .chat-send { background: var(--primary); color: #000; border: none; border-radius: 10px; padding: 0 18px; font-weight: 900; font-size: 13px; cursor: pointer; }
+
+        /* POLYMARKET */
+        .poly-tabs { display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .poly-tabs::-webkit-scrollbar { display: none; }
+        .ptab { flex-shrink: 0; padding: 10px 16px; font-size: 11px; font-weight: 700; color: var(--muted); background: none; border: none; cursor: pointer; position: relative; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ptab.on { color: var(--primary); }
+        .ptab.on::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--primary); }
+        .poly-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .poly-market { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+        .pm-title { font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 8px; }
+        .pm-foot { display: flex; justify-content: space-between; align-items: center; }
+        .pm-odds { font-size: 15px; font-weight: 900; color: var(--primary); }
+        .pm-vol { font-size: 11px; color: var(--muted); }
+        .pm-hot { font-size: 10px; background: var(--pdim); color: var(--primary); padding: 2px 7px; border-radius: 4px; font-weight: 700; }
+        .ai-picks { background: linear-gradient(135deg, rgba(247,166,0,0.08), rgba(167,139,250,0.08)); border: 1px solid rgba(247,166,0,0.2); border-radius: 14px; padding: 16px; }
+        .ai-picks-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .ai-picks-title { font-size: 12px; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
+        .pick-card { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px; margin-bottom: 8px; border-left: 3px solid var(--primary); }
+        .pick-card:last-of-type { margin-bottom: 0; }
+        .pick-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
+        .pick-meta { display: flex; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+        .pick-odds { font-size: 11px; font-weight: 800; color: var(--primary); background: var(--pdim); padding: 2px 8px; border-radius: 4px; }
+        .pick-conf { font-size: 11px; font-weight: 800; color: var(--green); background: var(--gdim); padding: 2px 8px; border-radius: 4px; }
+        .pick-edge { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; }
+        .edge-yes { color: var(--green); background: var(--gdim); }
+        .edge-no  { color: var(--red); background: var(--rdim); }
+        .pick-reason { font-size: 11px; color: var(--muted); line-height: 1.5; }
+        .poly-signal { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .ps-left .ps-lbl { font-size: 9px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .ps-left .ps-thesis { font-size: 12px; line-height: 1.5; color: var(--text); }
+        .ps-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+        .ps-dir { font-size: 13px; font-weight: 900; padding: 6px 14px; border-radius: 8px; }
+        .ps-risk { font-size: 10px; font-weight: 700; color: var(--muted); }
+
+        /* PERFORMANCE */
         .perf-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 20px; text-align: center; }
         .perf-lbl { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
         .perf-val { font-size: 48px; font-weight: 900; color: var(--primary); font-family: monospace; }
-
-        /* ── CHAT ── */
-        .chat-pane { display: none; flex-direction: column; height: 100%; }
-        .chat-pane.on { display: flex; }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 88%; padding: 10px 13px; border-radius: 12px; font-size: 13px; line-height: 1.6; }
-        .msg-user { align-self: flex-end; background: var(--primary-dim); color: var(--text); border: 1px solid rgba(247,166,0,0.2); border-bottom-right-radius: 3px; }
-        .msg-ai { align-self: flex-start; background: var(--card); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
-        .msg-ai .ai-name { font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .msg-thinking { opacity: 0.5; }
-        .chat-bar { padding: 12px 14px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
-        .chat-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 11px 13px; font-size: 13px; outline: none; }
-        .chat-input:focus { border-color: var(--primary); }
-        .chat-input::placeholder { color: var(--muted); }
-        .chat-send { background: var(--primary); color: #000; border: none; border-radius: 10px; padding: 0 18px; font-weight: 900; font-size: 13px; cursor: pointer; }
-
-        /* ── NEWS ── */
-        .news-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
-        .news-title { font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 6px; }
-        .news-src { font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; }
-
-        /* ── NEWS+AI SUBTABS ── */
-        .subtabs { display: flex; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 12px; flex-shrink: 0; }
-        .stab { flex: 1; text-align: center; padding: 9px; font-size: 11px; font-weight: 800; color: var(--muted); border: none; background: none; cursor: pointer; border-radius: 7px; letter-spacing: 0.5px; }
-        .stab.on { background: var(--primary); color: #000; }
+        .info-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; font-size: 12px; color: var(--muted); line-height: 1.7; }
     </style>
 </head>
 <body>
@@ -167,394 +206,41 @@
             <div class="live"><div class="ldot"></div>LIVE</div>
         </div>
         <div class="tabs">
-            <button class="tab on" onclick="go('signals')">Signals</button>
-            <button class="tab" onclick="go('pairs')">Live Pairs</button>
-            <button class="tab" onclick="go('newsai')">News / AI</button>
-            <button class="tab" onclick="go('predict')">Prediction</button>
-            <button class="tab" onclick="go('perf')">Performance</button>
+            <button class="tab on"  onclick="go('signals')">Signals</button>
+            <button class="tab"     onclick="go('pairs')">Live Pairs</button>
+            <button class="tab"     onclick="go('newsai')">News / AI</button>
+            <button class="tab"     onclick="go('poly')">Prediction</button>
+            <button class="tab"     onclick="go('perf')">Performance</button>
         </div>
     </div>
 
-    <!-- BODY -->
     <div class="body">
 
         <!-- SIGNALS -->
         <div id="pane-signals" class="pane on">
-            <div id="sig-root"><div class="loader"><div class="spin"></div><div class="load-txt">Scanning market...<br>Running technical analysis</div></div></div>
+            <div id="sig-root">
+                <div class="loader"><div class="spin"></div>
+                    <div class="load-txt">Scanning 30 candidates...<br>Running RSI · MACD · EMA · Bollinger · Volume</div>
+                </div>
+            </div>
         </div>
 
         <!-- LIVE PAIRS -->
         <div id="pane-pairs" class="pane-raw">
-            <div class="search-wrap">
-                <input id="s-input" class="s-input" placeholder="Search token e.g. BNB, PEPE..." type="text" onkeydown="if(event.key==='Enter')doSearch()">
+            <div class="search-bar">
+                <input id="s-in" class="s-in" placeholder="Search any token e.g. BNB, PEPE, TAO..." onkeydown="if(event.key==='Enter')doSearch()">
                 <button class="s-btn" onclick="doSearch()">Search</button>
-                <button class="s-clear" onclick="clearSearch()" id="s-clear-btn" style="display:none">✕</button>
+                <button class="s-clr" id="s-clr" style="display:none" onclick="clearSearch()">✕</button>
             </div>
-            <div id="pairs-mode-label" class="section-lbl">🔥 Top Tokens by Volume</div>
-            <div id="pairs-root" style="flex:1; overflow-y:auto;">
-                <div class="loader"><div class="spin"></div><div class="load-txt">Loading live pairs...</div></div>
+            <div class="sec-lbl" id="pairs-lbl">🔥 Top 50 Tokens by Volume</div>
+            <div class="pairs-list" id="pairs-root">
+                <div class="loader"><div class="spin"></div><div class="load-txt">Loading live market data...</div></div>
             </div>
         </div>
 
         <!-- NEWS / AI -->
         <div id="pane-newsai" class="pane">
             <div class="subtabs">
-                <button class="stab on" id="stab-news" onclick="switchSub('news')">Live News</button>
-                <button class="stab" id="stab-trend" onclick="switchSub('trend')">Trending</button>
-                <button class="stab" id="stab-ai" onclick="switchSub('ai')">AI Oracle</button>
-            </div>
-
-            <!-- News -->
-            <div id="sub-news" style="display:flex; flex-direction:column; gap:10px;">
-                <div class="loader"><div class="spin"></div><div class="load-txt">Loading news...</div></div>
-            </div>
-
-            <!-- Trending -->
-            <div id="sub-trend" style="display:none; flex-direction:column; gap:0;">
-                <div class="loader"><div class="spin"></div><div class="load-txt">Loading trending...</div></div>
-            </div>
-
-            <!-- AI Chat -->
-            <div id="sub-ai" class="chat-pane" style="display:none; margin: -14px; height: calc(100% + 28px - 52px);">
-                <div class="chat-msgs" id="chat-msgs">
-                    <div class="msg msg-ai">
-                        <div class="ai-name">Phoenix Oracle</div>
-                        Online. Ask me about any token, market structure, trade setup, or crypto concept.
-                    </div>
-                </div>
-                <div class="chat-bar">
-                    <input id="chat-input" class="chat-input" placeholder="Ask Phoenix Oracle..." onkeydown="if(event.key==='Enter')sendChat()">
-                    <button class="chat-send" onclick="sendChat()">Send</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PREDICTION -->
-        <div id="pane-predict" class="pane">
-            <div id="pred-root"><div class="loader"><div class="spin"></div><div class="load-txt">Loading predictions...</div></div></div>
-        </div>
-
-        <!-- PERFORMANCE -->
-        <div id="pane-perf" class="pane">
-            <div class="perf-card">
-                <div class="perf-lbl">Calculated Signal Variance Index</div>
-                <div class="perf-val" id="perf-val">+4.12%</div>
-            </div>
-            <div class="news-card" style="margin-top:4px;">
-                <div class="news-title" style="color:var(--muted); font-size:12px;">
-                    Performance tracking based on signal confidence scoring across all analysed pairs. Live P&L tracking coming in next update.
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<script>
-const API = "https://phoenix-signal-backend.onrender.com";
-let currentSub = "news";
-let searchActive = false;
-
-// ── TAB ROUTING ──────────────────────────────────────────
-
-function go(id) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-    document.querySelectorAll('.pane, .pane-raw').forEach(p => p.classList.remove('on'));
-
-    const btn = [...document.querySelectorAll('.tab')].find(b => b.getAttribute('onclick').includes(`'${id}'`));
-    if (btn) btn.classList.add('on');
-    const pane = document.getElementById(`pane-${id}`);
-    if (pane) pane.classList.add('on');
-
-    if (id === 'signals')  loadSignals();
-    if (id === 'pairs')    loadPairs();
-    if (id === 'newsai')   switchSub(currentSub);
-    if (id === 'predict')  loadPredict();
-}
-
-// ── SUBTABS ──────────────────────────────────────────────
-
-function switchSub(sub) {
-    currentSub = sub;
-    document.querySelectorAll('.stab').forEach(s => s.classList.remove('on'));
-    document.getElementById(`stab-${sub}`).classList.add('on');
-
-    document.getElementById('sub-news').style.display  = sub === 'news'  ? 'flex' : 'none';
-    document.getElementById('sub-trend').style.display = sub === 'trend' ? 'flex' : 'none';
-    document.getElementById('sub-ai').style.display    = sub === 'ai'    ? 'flex' : 'none';
-
-    if (sub === 'news')  loadNews();
-    if (sub === 'trend') loadTrending();
-}
-
-// ── FETCH HELPER ─────────────────────────────────────────
-
-async function apiFetch(url) {
-    const r = await fetch(url, { signal: AbortSignal.timeout(55000) });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
-}
-
-// ── SIGNALS ──────────────────────────────────────────────
-
-let signalsLoaded = false;
-
-async function loadSignals() {
-    if (signalsLoaded) return;
-    const root = document.getElementById('sig-root');
-    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Scanning ${25} candidates...<br>Running RSI · MACD · EMA · BB · Volume</div></div>`;
-    try {
-        const data = await apiFetch(`${API}/api/v2/history`);
-        const sigs = data.signals || [];
-        if (!sigs.length) {
-            root.innerHTML = `<div class="empty">No high-confidence signals detected.<br><span style="font-size:11px;">Minimum 75% confidence required.<br>Market may be ranging — check back soon.</span></div>`;
-            return;
-        }
-        root.innerHTML = sigs.map(s => buildSigCard(s)).join('');
-        signalsLoaded = true;
-    } catch(e) {
-        root.innerHTML = `<div class="err">Signal engine unreachable.<br><small style="font-weight:400;">${e.message}</small><br><button class="retry" onclick="signalsLoaded=false;loadSignals()">Retry</button></div>`;
-    }
-}
-
-function buildSigCard(s) {
-    const isLong = s.direction === 'LONG';
-    const rsiNum = parseFloat(s.rsi) || 50;
-    const rsiColor = rsiNum < 35 ? 'var(--green)' : rsiNum > 65 ? 'var(--red)' : 'var(--primary)';
-    const rsiWidth = Math.min(100, rsiNum);
-    const reasons = (s.reasons || []).map(r =>
-        `<div class="reason-item"><div class="reason-dot"></div>${r}</div>`
-    ).join('');
-
-    return `
-    <div class="sig-card">
-        <div class="sig-top">
-            <div>
-                <div class="sig-pair">${s.pair}</div>
-                <div style="font-size:11px; color:var(--muted); margin-top:3px;">Entry · 20x Leverage</div>
-            </div>
-            <div class="sig-meta">
-                <div class="dir ${isLong ? 'long' : 'short'}">${s.direction}</div>
-                <div class="lev">${s.leverage}</div>
-            </div>
-        </div>
-
-        <div class="sig-grid">
-            <div class="sc">
-                <div class="sc-lbl">Entry Price</div>
-                <div class="sc-val c-entry">$${s.entry}</div>
-            </div>
-            <div class="sc">
-                <div class="sc-lbl">Confidence</div>
-                <div class="sc-val c-conf">${s.confidence}</div>
-            </div>
-            <div class="sc">
-                <div class="sc-lbl">Stop Loss</div>
-                <div class="sc-val c-sl">$${s.sl}</div>
-            </div>
-            <div class="sc">
-                <div class="sc-lbl">Risk / Reward</div>
-                <div class="sc-val c-rr">${s.rr}</div>
-            </div>
-            <div class="sc">
-                <div class="sc-lbl">Take Profit 1</div>
-                <div class="sc-val c-tp1">$${s.tp1}</div>
-            </div>
-            <div class="sc">
-                <div class="sc-lbl">Take Profit 2</div>
-                <div class="sc-val c-tp2">$${s.tp2}</div>
-            </div>
-            <div class="sc" style="grid-column:span 2;">
-                <div class="sc-lbl">Take Profit 3 🎯</div>
-                <div class="sc-val c-tp3">$${s.tp3}</div>
-            </div>
-        </div>
-
-        <div class="sig-footer">
-            <div class="rsi-bar-wrap">
-                <div class="rsi-lbl">RSI · ${rsiNum}</div>
-                <div class="rsi-bar">
-                    <div class="rsi-fill" style="width:${rsiWidth}%; background:${rsiColor};"></div>
-                </div>
-            </div>
-            <div style="font-size:11px; color:var(--muted); font-weight:700;">Score ${s.score}</div>
-        </div>
-
-        ${reasons ? `<div class="sig-reasons"><div class="sig-reasons-title">Signal Reasons</div>${reasons}</div>` : ''}
-    </div>`;
-}
-
-// ── LIVE PAIRS ────────────────────────────────────────────
-
-async function loadPairs(query = "") {
-    const root  = document.getElementById('pairs-root');
-    const label = document.getElementById('pairs-mode-label');
-    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">${query ? `Searching "${query}"...` : 'Loading live market data...'}</div></div>`;
-
-    try {
-        const url = query
-            ? `${API}/api/v2/pairs?search=${encodeURIComponent(query)}`
-            : `${API}/api/v2/pairs`;
-        const coins = await apiFetch(url);
-
-        label.textContent = query
-            ? `🔍 Results for "${query}" — ${coins.length} found`
-            : `🔥 Top 40 Tokens by Volume`;
-
-        if (!coins.length) {
-            root.innerHTML = `<div class="empty">No results found for "${query}"</div>`;
-            return;
-        }
-
-        root.innerHTML = coins.map(c => {
-            const isNeg = c.change.startsWith('-');
-            const img = c.thumb ? `<img class="pr-thumb" src="${c.thumb}" onerror="this.style.display='none'">` : `<div class="pr-thumb"></div>`;
-            return `
-            <div class="pair-row">
-                <div class="pr-left">
-                    ${img}
-                    <div>
-                        <div class="pr-sym">${c.symbol}</div>
-                        <div class="pr-name">${c.name}</div>
-                        <div class="pr-rank">#${c.market_cap_rank}</div>
-                    </div>
-                </div>
-                <div class="pr-right">
-                    <div class="pr-price">$${c.price}</div>
-                    <div class="pr-change ${isNeg ? 'dn' : 'up'}">${c.change}</div>
-                    <div class="pr-vol">${c.volume}</div>
-                </div>
-            </div>`;
-        }).join('');
-    } catch(e) {
-        root.innerHTML = `<div class="err">Market data unreachable.<br><small>${e.message}</small><br><button class="retry" onclick="loadPairs()">Retry</button></div>`;
-    }
-}
-
-function doSearch() {
-    const q = document.getElementById('s-input').value.trim();
-    if (!q) return;
-    searchActive = true;
-    document.getElementById('s-clear-btn').style.display = 'block';
-    loadPairs(q);
-}
-
-function clearSearch() {
-    searchActive = false;
-    document.getElementById('s-input').value = '';
-    document.getElementById('s-clear-btn').style.display = 'none';
-    loadPairs();
-}
-
-// ── NEWS ─────────────────────────────────────────────────
-
-let newsLoaded = false;
-async function loadNews() {
-    if (newsLoaded) return;
-    const root = document.getElementById('sub-news');
-    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Loading news...</div></div>`;
-    try {
-        const data = await apiFetch(`${API}/api/v2/news`);
-        root.innerHTML = (data.news || []).map(n => `
-            <div class="news-card">
-                <div class="news-title">${n.title}</div>
-                <div class="news-src">${n.source}</div>
-            </div>`).join('');
-        newsLoaded = true;
-    } catch(e) {
-        root.innerHTML = `<div class="err">News unavailable.<br><button class="retry" onclick="newsLoaded=false;loadNews()">Retry</button></div>`;
-    }
-}
-
-// ── TRENDING ──────────────────────────────────────────────
-
-let trendLoaded = false;
-async function loadTrending() {
-    if (trendLoaded) return;
-    const root = document.getElementById('sub-trend');
-    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Loading trending tokens...</div></div>`;
-    try {
-        const data = await apiFetch(`${API}/api/v2/trending`);
-        const list = data.trending || [];
-        if (!list.length) {
-            root.innerHTML = `<div class="empty">No trending data available.</div>`;
-            return;
-        }
-        root.innerHTML = list.map((t, i) => {
-            const img = t.thumb ? `<img class="tr-thumb" src="${t.thumb}" onerror="this.style.background='var(--border)'">` : `<div class="tr-thumb"></div>`;
-            return `
-            <div class="trend-row">
-                <div class="tr-num">${i + 1}</div>
-                ${img}
-                <div>
-                    <div class="tr-name">${t.name}</div>
-                    <div class="tr-sym">${t.symbol}</div>
-                </div>
-                <div class="tr-rank">${t.rank !== 'N/A' ? '#' + t.rank : '—'}</div>
-            </div>`;
-        }).join('');
-        trendLoaded = true;
-    } catch(e) {
-        root.innerHTML = `<div class="err">Trending unavailable.<br><button class="retry" onclick="trendLoaded=false;loadTrending()">Retry</button></div>`;
-    }
-}
-
-// ── PREDICTION ────────────────────────────────────────────
-
-let predLoaded = false;
-async function loadPredict() {
-    if (predLoaded) return;
-    const root = document.getElementById('pred-root');
-    try {
-        const data = await apiFetch(`${API}/api/v2/polymarket`);
-        root.innerHTML = (data.markets || []).map(m => `
-            <div class="pred-card">
-                <div class="pred-q">${m.title}</div>
-                <div class="pred-odds">${m.odds}</div>
-            </div>`).join('');
-        predLoaded = true;
-    } catch(e) {
-        root.innerHTML = `<div class="err">Prediction data unavailable.<br><button class="retry" onclick="predLoaded=false;loadPredict()">Retry</button></div>`;
-    }
-}
-
-// ── AI CHAT ──────────────────────────────────────────────
-
-async function sendChat() {
-    const input = document.getElementById('chat-input');
-    const msgs  = document.getElementById('chat-msgs');
-    const text  = input.value.trim();
-    if (!text) return;
-
-    input.value = '';
-    msgs.innerHTML += `<div class="msg msg-user">${text}</div>`;
-
-    const thinkId = 'think-' + Date.now();
-    msgs.innerHTML += `<div class="msg msg-ai msg-thinking" id="${thinkId}"><div class="ai-name">Phoenix Oracle</div>Analysing...</div>`;
-    msgs.scrollTop = msgs.scrollHeight;
-
-    try {
-        const r = await fetch(`${API}/api/v2/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: text }),
-            signal: AbortSignal.timeout(30000)
-        });
-        const data = await r.json();
-        document.getElementById(thinkId)?.remove();
-        msgs.innerHTML += `<div class="msg msg-ai"><div class="ai-name">Phoenix Oracle</div>${data.reply}</div>`;
-    } catch(e) {
-        document.getElementById(thinkId)?.remove();
-        msgs.innerHTML += `<div class="msg msg-ai" style="color:var(--red)"><div class="ai-name">Phoenix Oracle</div>Connection failed. Please retry.</div>`;
-    }
-    msgs.scrollTop = msgs.scrollHeight;
-}
-
-// ── BOOT ─────────────────────────────────────────────────
-
-fetch(`${API}/ping`).catch(() => {});
-loadSignals();
-loadPairs();
-</script>
-</body>
-</html>
+                <button class="stab on" id="st-news"  onclick="switchSub('news')">News</button>
+                <button class="stab"    id="st-trend" onclick="switchSub('trend')">Trending</button>
+                <button cl
