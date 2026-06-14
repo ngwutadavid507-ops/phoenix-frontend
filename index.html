@@ -331,4 +331,230 @@ function buildSigCard(s) {
         <div class="sig-top">
             <div>
                 <div class="sig-pair">${s.pair}</div>
-                <div style="font-size:11p
+                <div style="font-size:11px; color:var(--muted); margin-top:3px;">Entry · 20x Leverage</div>
+            </div>
+            <div class="sig-meta">
+                <div class="dir ${isLong ? 'long' : 'short'}">${s.direction}</div>
+                <div class="lev">${s.leverage}</div>
+            </div>
+        </div>
+
+        <div class="sig-grid">
+            <div class="sc">
+                <div class="sc-lbl">Entry Price</div>
+                <div class="sc-val c-entry">$${s.entry}</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">Confidence</div>
+                <div class="sc-val c-conf">${s.confidence}</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">Stop Loss</div>
+                <div class="sc-val c-sl">$${s.sl}</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">Risk / Reward</div>
+                <div class="sc-val c-rr">${s.rr}</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">Take Profit 1</div>
+                <div class="sc-val c-tp1">$${s.tp1}</div>
+            </div>
+            <div class="sc">
+                <div class="sc-lbl">Take Profit 2</div>
+                <div class="sc-val c-tp2">$${s.tp2}</div>
+            </div>
+            <div class="sc" style="grid-column:span 2;">
+                <div class="sc-lbl">Take Profit 3 🎯</div>
+                <div class="sc-val c-tp3">$${s.tp3}</div>
+            </div>
+        </div>
+
+        <div class="sig-footer">
+            <div class="rsi-bar-wrap">
+                <div class="rsi-lbl">RSI · ${rsiNum}</div>
+                <div class="rsi-bar">
+                    <div class="rsi-fill" style="width:${rsiWidth}%; background:${rsiColor};"></div>
+                </div>
+            </div>
+            <div style="font-size:11px; color:var(--muted); font-weight:700;">Score ${s.score}</div>
+        </div>
+
+        ${reasons ? `<div class="sig-reasons"><div class="sig-reasons-title">Signal Reasons</div>${reasons}</div>` : ''}
+    </div>`;
+}
+
+// ── LIVE PAIRS ────────────────────────────────────────────
+
+async function loadPairs(query = "") {
+    const root  = document.getElementById('pairs-root');
+    const label = document.getElementById('pairs-mode-label');
+    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">${query ? `Searching "${query}"...` : 'Loading live market data...'}</div></div>`;
+
+    try {
+        const url = query
+            ? `${API}/api/v2/pairs?search=${encodeURIComponent(query)}`
+            : `${API}/api/v2/pairs`;
+        const coins = await apiFetch(url);
+
+        label.textContent = query
+            ? `🔍 Results for "${query}" — ${coins.length} found`
+            : `🔥 Top 40 Tokens by Volume`;
+
+        if (!coins.length) {
+            root.innerHTML = `<div class="empty">No results found for "${query}"</div>`;
+            return;
+        }
+
+        root.innerHTML = coins.map(c => {
+            const isNeg = c.change.startsWith('-');
+            const img = c.thumb ? `<img class="pr-thumb" src="${c.thumb}" onerror="this.style.display='none'">` : `<div class="pr-thumb"></div>`;
+            return `
+            <div class="pair-row">
+                <div class="pr-left">
+                    ${img}
+                    <div>
+                        <div class="pr-sym">${c.symbol}</div>
+                        <div class="pr-name">${c.name}</div>
+                        <div class="pr-rank">#${c.market_cap_rank}</div>
+                    </div>
+                </div>
+                <div class="pr-right">
+                    <div class="pr-price">$${c.price}</div>
+                    <div class="pr-change ${isNeg ? 'dn' : 'up'}">${c.change}</div>
+                    <div class="pr-vol">${c.volume}</div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        root.innerHTML = `<div class="err">Market data unreachable.<br><small>${e.message}</small><br><button class="retry" onclick="loadPairs()">Retry</button></div>`;
+    }
+}
+
+function doSearch() {
+    const q = document.getElementById('s-input').value.trim();
+    if (!q) return;
+    searchActive = true;
+    document.getElementById('s-clear-btn').style.display = 'block';
+    loadPairs(q);
+}
+
+function clearSearch() {
+    searchActive = false;
+    document.getElementById('s-input').value = '';
+    document.getElementById('s-clear-btn').style.display = 'none';
+    loadPairs();
+}
+
+// ── NEWS ─────────────────────────────────────────────────
+
+let newsLoaded = false;
+async function loadNews() {
+    if (newsLoaded) return;
+    const root = document.getElementById('sub-news');
+    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Loading news...</div></div>`;
+    try {
+        const data = await apiFetch(`${API}/api/v2/news`);
+        root.innerHTML = (data.news || []).map(n => `
+            <div class="news-card">
+                <div class="news-title">${n.title}</div>
+                <div class="news-src">${n.source}</div>
+            </div>`).join('');
+        newsLoaded = true;
+    } catch(e) {
+        root.innerHTML = `<div class="err">News unavailable.<br><button class="retry" onclick="newsLoaded=false;loadNews()">Retry</button></div>`;
+    }
+}
+
+// ── TRENDING ──────────────────────────────────────────────
+
+let trendLoaded = false;
+async function loadTrending() {
+    if (trendLoaded) return;
+    const root = document.getElementById('sub-trend');
+    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Loading trending tokens...</div></div>`;
+    try {
+        const data = await apiFetch(`${API}/api/v2/trending`);
+        const list = data.trending || [];
+        if (!list.length) {
+            root.innerHTML = `<div class="empty">No trending data available.</div>`;
+            return;
+        }
+        root.innerHTML = list.map((t, i) => {
+            const img = t.thumb ? `<img class="tr-thumb" src="${t.thumb}" onerror="this.style.background='var(--border)'">` : `<div class="tr-thumb"></div>`;
+            return `
+            <div class="trend-row">
+                <div class="tr-num">${i + 1}</div>
+                ${img}
+                <div>
+                    <div class="tr-name">${t.name}</div>
+                    <div class="tr-sym">${t.symbol}</div>
+                </div>
+                <div class="tr-rank">${t.rank !== 'N/A' ? '#' + t.rank : '—'}</div>
+            </div>`;
+        }).join('');
+        trendLoaded = true;
+    } catch(e) {
+        root.innerHTML = `<div class="err">Trending unavailable.<br><button class="retry" onclick="trendLoaded=false;loadTrending()">Retry</button></div>`;
+    }
+}
+
+// ── PREDICTION ────────────────────────────────────────────
+
+let predLoaded = false;
+async function loadPredict() {
+    if (predLoaded) return;
+    const root = document.getElementById('pred-root');
+    try {
+        const data = await apiFetch(`${API}/api/v2/polymarket`);
+        root.innerHTML = (data.markets || []).map(m => `
+            <div class="pred-card">
+                <div class="pred-q">${m.title}</div>
+                <div class="pred-odds">${m.odds}</div>
+            </div>`).join('');
+        predLoaded = true;
+    } catch(e) {
+        root.innerHTML = `<div class="err">Prediction data unavailable.<br><button class="retry" onclick="predLoaded=false;loadPredict()">Retry</button></div>`;
+    }
+}
+
+// ── AI CHAT ──────────────────────────────────────────────
+
+async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const msgs  = document.getElementById('chat-msgs');
+    const text  = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    msgs.innerHTML += `<div class="msg msg-user">${text}</div>`;
+
+    const thinkId = 'think-' + Date.now();
+    msgs.innerHTML += `<div class="msg msg-ai msg-thinking" id="${thinkId}"><div class="ai-name">Phoenix Oracle</div>Analysing...</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+        const r = await fetch(`${API}/api/v2/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: text }),
+            signal: AbortSignal.timeout(30000)
+        });
+        const data = await r.json();
+        document.getElementById(thinkId)?.remove();
+        msgs.innerHTML += `<div class="msg msg-ai"><div class="ai-name">Phoenix Oracle</div>${data.reply}</div>`;
+    } catch(e) {
+        document.getElementById(thinkId)?.remove();
+        msgs.innerHTML += `<div class="msg msg-ai" style="color:var(--red)"><div class="ai-name">Phoenix Oracle</div>Connection failed. Please retry.</div>`;
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── BOOT ─────────────────────────────────────────────────
+
+fetch(`${API}/ping`).catch(() => {});
+loadSignals();
+loadPairs();
+</script>
+</body>
+</html>
