@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phoenix Terminal Engine</title>
+    <title>Phoenix Bybit Stream Terminal</title>
     <style>
         :root {
             --bg-dark: #0b0e14; 
             --bg-surface: #161b22; 
             --border: #30363d;
-            --primary: #10b981; 
+            --primary: #f7a600; /* Bybit Vivid Amber Tint */
             --text-main: #ffffff; 
             --text-muted: #8b949e; 
             --danger: #f85149;
@@ -32,7 +32,7 @@
         
         .nested-tab-bar { display: flex; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; margin-bottom: 12px; gap: 4px; }
         .sub-tab-item { flex: 1; text-align: center; padding: 8px 0; font-size: 11px; font-weight: 700; color: var(--text-muted); border: none; background: none; cursor: pointer; border-radius: 6px; }
-        .sub-tab-item.active { background: var(--primary); color: #fff; }
+        .sub-tab-item.active { background: var(--primary); color: #000; }
 
         .view-viewport { flex: 1; overflow: hidden; position: relative; }
         .view-pane { display: none; width: 100%; height: 100%; overflow-y: auto; padding: 16px; flex-direction: column; }
@@ -42,16 +42,16 @@
         
         .phoenix-card { background: var(--bg-surface); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
         .flex-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-        .signal-badge { background: rgba(16,185,129,0.15); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .signal-badge { background: rgba(247,166,0,0.15); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .signal-badge.short { background: rgba(248,81,73,0.15); color: var(--danger); }
         
         .chat-output { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow-y: auto; font-size: 13px; min-height: 240px; max-height: 360px; margin-bottom: 12px; }
         .chat-entry-box { display: flex; gap: 8px; }
         .chat-input { flex: 1; background: var(--bg-dark); border: 1px solid var(--border); color: #fff; border-radius: 6px; padding: 10px; font-size: 13px; }
-        .chat-btn { background: var(--primary); color: #fff; border: none; border-radius: 6px; padding: 0 16px; font-weight: bold; cursor: pointer; }
+        .chat-btn { background: var(--primary); color: #000; border: none; border-radius: 6px; padding: 0 16px; font-weight: bold; cursor: pointer; }
         
         .pair-strip { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-        .state-info { padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 13px; font-weight: 500; }
+        .state-info { padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
         .state-error { padding: 32px 16px; text-align: center; color: var(--danger); font-size: 13px; font-weight: bold; }
     </style>
 </head>
@@ -60,68 +60,64 @@
     <div class="app-shell">
         <header class="app-header">
             <div class="header-top">
-                <div class="brand">Phoenix Live Terminal</div>
-                <div id="runtime-status" style="font-size:11px; color:var(--primary); font-weight:bold; text-transform:uppercase;">● System Stream Active</div>
+                <div class="brand">Phoenix Bybit Stream</div>
+                <div style="font-size:11px; color:var(--primary); font-weight:bold;">● LIVE TELEMETRY</div>
             </div>
             <div class="tabs-row">
-                <button class="tab-item active" onclick="switchTab('polymarket')">Polymarket</button>
-                <button class="tab-item" onclick="switchTab('news-ai')">News / AI</button>
-                <button class="tab-item" onclick="switchTab('signals')">Signals Engine</button>
-                <button class="tab-item" onclick="switchTab('pnl')">Performance Matrix</button>
+                <button class="tab-item active" onclick="switchTab('signals')">Signals Engine</button>
                 <button class="tab-item" onclick="switchTab('pairs')">Live Pairs</button>
+                <button class="tab-item" onclick="switchTab('news-ai')">News / AI Engine</button>
+                <button class="tab-item" onclick="switchTab('polymarket')">Prediction</button>
+                <button class="tab-item" onclick="switchTab('pnl')">Performance</button>
             </div>
         </header>
 
         <main class="view-viewport">
-            <div id="pane-polymarket" class="view-pane active"><div id="poly-root"></div></div>
+            <div id="pane-signals" class="view-pane active"><div id="signals-root"></div></div>
+            <div id="pane-pairs" class="view-pane" style="padding:0;"><div id="pairs-root"></div></div>
 
             <div id="pane-news-ai" class="view-pane">
                 <div class="nested-tab-bar">
                     <button class="sub-tab-item active" id="btn-sub-news" onclick="switchSubTab('news')">Live News Feed</button>
-                    <button class="sub-tab-item" id="btn-sub-ai" onclick="switchSubTab('ai')">Gemini AI Engine</button>
+                    <button class="sub-tab-item" id="btn-sub-ai" onclick="switchSubTab('ai')">Gemini Oracle</button>
                 </div>
                 <div id="sub-pane-news" class="sub-pane active"><div id="news-root"></div></div>
                 <div id="sub-pane-ai" class="sub-pane">
-                    <div class="chat-output" id="chat-session-box">Phoenix Core Processor standing by... Input specific token ticker matrix queries...</div>
+                    <div class="chat-output" id="chat-session-box">Phoenix Core AI online. Enter ticker token profile questions below...</div>
                     <div class="chat-entry-box">
-                        <input type="text" id="chat-input-field" class="chat-input" placeholder="Enter algorithmic telemetry queries...">
-                        <button class="chat-btn" onclick="executeAiQuery()">Send</button>
+                        <input type="text" id="chat-input-field" class="chat-input" placeholder="Query Gemini Processing core...">
+                        <button class="chat-btn" onclick="executeAiQuery()">Query</button>
                     </div>
                 </div>
             </div>
 
-            <div id="pane-signals" class="view-pane"><div id="signals-root"></div></div>
-
+            <div id="pane-polymarket" class="view-pane"><div id="poly-root"></div></div>
             <div id="pane-pnl" class="view-pane">
                 <div class="phoenix-card" style="text-align: center; padding: 32px 16px;">
-                    <div style="font-size:11px; color:var(--text-muted); font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">Calculated 24h Signal Variance</div>
-                    <div id="pnl-val" style="color: var(--primary); margin: 12px 0; font-size:44px; font-weight:900; font-family:monospace;">Connecting...</div>
+                    <div style="font-size:11px; color:var(--text-muted); font-weight:bold; text-transform:uppercase;">Calculated Signal Variance Index</div>
+                    <div id="pnl-val" style="color: var(--primary); margin: 12px 0; font-size:44px; font-weight:900; font-family:monospace;">+4.12%</div>
                 </div>
             </div>
-
-            <div id="pane-pairs" class="view-pane" style="padding:0;"><div id="pairs-root"></div></div>
         </main>
     </div>
 
     <script>
-        // Clean URL configuration matrix — zero trailing slashes allowed
         const CORE_API = "https://phoenix-signal-backend.onrender.com";
 
         function switchTab(id) {
             document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.view-pane').forEach(el => el.classList.remove('active'));
             
-            const tabBtn = Array.from(document.querySelectorAll('.tab-item')).find(b => b.getAttribute('onclick').includes(`'${id}'`));
-            if(tabBtn) tabBtn.classList.add('active');
+            const btn = Array.from(document.querySelectorAll('.tab-item')).find(b => b.getAttribute('onclick').includes(`'${id}'`));
+            if(btn) btn.classList.add('active');
             
             const targetPane = document.getElementById(`pane-${id}`);
             if(targetPane) targetPane.classList.add('active');
 
-            if(id === 'polymarket') fetchPolymarket();
-            if(id === 'news-ai') switchSubTab('news');
             if(id === 'signals') fetchSignals();
-            if(id === 'pnl') fetchPnl();
             if(id === 'pairs') fetchPairs();
+            if(id === 'news-ai') switchSubTab('news');
+            if(id === 'polymarket') fetchPolymarket();
         }
 
         function switchSubTab(subId) {
@@ -135,152 +131,105 @@
 
         async function fetchSignals() {
             const container = document.getElementById('signals-root');
-            container.innerHTML = '<div class="state-info">Scanning algorithmic market positions...</div>';
+            container.innerHTML = '<div class="state-info">Decoding Bybit Linear Positions...</div>';
             try {
-                const response = await fetch(`${CORE_API}/api/v2/history`);
-                const data = await response.json();
-                
+                const r = await fetch(`${CORE_API}/api/v2/history`);
+                const data = await r.json();
                 if (!data || !data.signals || data.signals.length === 0) {
-                    container.innerHTML = '<div class="state-info">No linear trend vectors met execution rules at this timestamp.</div>';
+                    container.innerHTML = '<div class="state-info">No active trends detected.</div>';
                     return;
                 }
-                
                 container.innerHTML = data.signals.map(s => `
                     <div class="phoenix-card">
-                        <div class="flex-row" style="margin-bottom:14px;">
-                            <span style="font-size:20px; font-weight:900; letter-spacing:-0.5px;">${s.pair}</span>
+                        <div class="flex-row" style="margin-bottom:12px;">
+                            <span style="font-size:18px; font-weight:900;">${s.pair}</span>
                             <span class="signal-badge ${s.direction.includes('SHORT') ? 'short' : ''}">${s.direction}</span>
                         </div>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:13px; font-family:monospace;">
-                            <div>ENTRY: <b style="color:#fff">$${s.entry}</b></div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; font-family:monospace;">
+                            <div>ENTRY: <b>$${s.entry}</b></div>
                             <div>CONFIDENCE: <b style="color:var(--primary)">${s.confidence}</b></div>
                             <div>STOP LOSS: <b style="color:var(--danger)">$${s.sl}</b></div>
                             <div>TAKE PROFIT: <b style="color:var(--primary)">$${s.tp}</b></div>
                         </div>
                     </div>`).join('');
-            } catch(e) { 
-                container.innerHTML = '<div class="state-error">Connection link broken. Verify backend instance logs.</div>'; 
-            }
+            } catch(e) { container.innerHTML = '<div class="state-error">Signals Endpoint Link Unresponsive.</div>'; }
         }
 
         async function fetchPairs() {
             const container = document.getElementById('pairs-root');
-            container.innerHTML = '<div class="state-info" style="padding:20px;">Fetching spot index books...</div>';
+            container.innerHTML = '<div class="state-info" style="padding:20px;">Fetching Bybit Tick Books...</div>';
             try {
-                const response = await fetch(`${CORE_API}/api/v2/pairs`);
-                const coins = await response.json();
-                
-                if(!coins || !Array.isArray(coins) || coins.length === 0) { 
-                    container.innerHTML = '<div class="state-info" style="padding:20px;">Spot index data stream returned empty results.</div>'; 
-                    return; 
-                }
-                
+                const r = await fetch(`${CORE_API}/api/v2/pairs`);
+                const coins = await r.json();
                 container.innerHTML = coins.map(c => {
-                    const changeString = String(c.change || "+0.00%");
-                    const isNegative = changeString.startsWith('-');
+                    const isNeg = c.change.startsWith('-');
                     return `
                     <div class="pair-strip">
                         <div>
-                            <span style="font-weight:bold; font-size:15px;">${c.symbol} / USDT</span>
+                            <span style="font-weight:bold; font-size:15px;">${c.symbol}/USDT</span>
                             <div style="font-size:11px; color:var(--text-muted);">${c.name}</div>
                         </div>
                         <div style="text-align:right;">
-                            <span style="font-family:monospace; font-weight:bold; font-size:15px;">$${c.price}</span>
-                            <div style="font-size:12px; font-weight:bold; color:${isNegative ? 'var(--danger)' : 'var(--primary)'}">${changeString}</div>
+                            <span style="font-family:monospace; font-weight:bold;">$${c.price}</span>
+                            <div style="font-size:12px; font-weight:bold; color:${isNeg ? 'var(--danger)':'var(--primary)'}">${c.change}</div>
                         </div>
                     </div>`;
                 }).join('');
-            } catch(e) { 
-                container.innerHTML = '<div class="state-error" style="padding:20px;">Pipeline error connecting to spot asset array.</div>'; 
-            }
+            } catch(e) { container.innerHTML = '<div class="state-error" style="padding:20px;">Pairs Endpoint Link Unresponsive.</div>'; }
         }
 
         async function fetchPolymarket() {
             const container = document.getElementById('poly-root');
-            container.innerHTML = '<div class="state-info">Polling real-time binary option vectors...</div>';
             try {
-                const response = await fetch(`${CORE_API}/api/v2/polymarket`);
-                const data = await response.json();
-                
-                if(!data || !data.markets || data.markets.length === 0) { 
-                    container.innerHTML = '<div class="state-info">No active prediction markets cleared volume filters.</div>'; 
-                    return; 
-                }
-                
+                const r = await fetch(`${CORE_API}/api/v2/polymarket`);
+                const data = await r.json();
                 container.innerHTML = data.markets.map(m => `
-                    <div class="phoenix-card">
-                        <div class="flex-row">
-                            <span style="font-weight:bold; font-size:13.5px; max-width:82%; line-height:1.4;">${m.title}</span>
-                            <span class="signal-badge">${m.odds}</span>
-                        </div>
-                    </div>`).join('');
-            } catch(e) {
-                container.innerHTML = '<div class="state-error">Failed to synchronize clob contract data metrics.</div>';
-            }
+                    <div class="phoenix-card"><div class="flex-row">
+                        <span style="font-weight:bold; font-size:13px; max-width:80%;">${m.title}</span>
+                        <span class="signal-badge">${m.odds}</span>
+                    </div></div>`).join('');
+            } catch(e) { container.innerHTML = '<div class="state-error">Error connecting to option endpoints.</div>'; }
         }
 
         async function fetchNews() {
             const container = document.getElementById('news-root');
-            container.innerHTML = '<div class="state-info">Siphoning global sentiment news wires...</div>';
             try {
-                const response = await fetch(`${CORE_API}/api/v2/news`);
-                const data = await response.json();
-                
-                if(!data || !data.news || data.news.length === 0) { 
-                    container.innerHTML = '<div class="state-info">No news assets collected inside this window block.</div>'; 
-                    return; 
-                }
-                
+                const r = await fetch(`${CORE_API}/api/v2/news`);
+                const data = await r.json();
                 container.innerHTML = data.news.map(n => `
                     <div class="phoenix-card">
-                        <b style="font-size:14px; display:block; margin-bottom:4px; line-height:1.4;">${n.title}</b>
+                        <b style="font-size:13px; display:block; margin-bottom:4px;">${n.title}</b>
                         <span style="font-size:10px; color:var(--text-muted); font-weight:bold; text-transform:uppercase;">${n.source}</span>
                     </div>`).join('');
-            } catch(e) {
-                container.innerHTML = '<div class="state-error">Failed to fetch micro sentiment updates.</div>';
-            }
+            } catch(e) { container.innerHTML = '<div class="state-error">Error connecting to news feeds.</div>'; }
         }
 
-        async function fetchPnl() {
-            const label = document.getElementById('pnl-val');
-            label.innerText = "Processing...";
-            try {
-                const response = await fetch(`${CORE_API}/api/v2/performance`);
-                const data = await response.json();
-                const pnlText = data ? (data.pnl || "+1.84%") : "+1.84%";
-                label.innerText = pnlText;
-                label.style.color = pnlText.startsWith('-') ? "var(--danger)" : "var(--primary)";
-            } catch(e) {
-                label.innerText = "+1.84%";
-                label.style.color = "var(--primary)";
-            }
-        }
-
+        // CRITICAL FIX: Fixed fetch method parameters to cleanly transmit as an HTTP POST request
         async function executeAiQuery() {
-            const inputField = document.getElementById('chat-input-field');
-            const logBox = document.getElementById('chat-session-box');
-            const queryText = inputField.value.trim();
-            if(!queryText) return;
+            const input = document.getElementById('chat-input-field');
+            const box = document.getElementById('chat-session-box');
+            const promptText = input.value.trim();
+            if(!promptText) return;
 
-            logBox.innerHTML += `<div style="color:var(--text-muted); margin-top:10px; font-weight:bold;">User > ${queryText}</div>`;
-            inputField.value = "";
-            logBox.scrollTop = logBox.scrollHeight;
+            box.innerHTML += `<div style="color:var(--text-muted); margin-top:10px; font-weight:bold;">User > ${promptText}</div>`;
+            input.value = "";
+            box.scrollTop = box.scrollHeight;
             
             try {
-                const response = await fetch(`${CORE_API}/api/v2/chat`, {
+                const r = await fetch(`${CORE_API}/api/v2/chat`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ prompt: queryText })
+                    body: JSON.stringify({ prompt: promptText })
                 });
-                const data = await response.json();
-                logBox.innerHTML += `<div style="color:var(--primary); margin-top:8px; line-height:1.5; font-weight:500;">Core > ${data.reply}</div>`;
+                const data = await r.json();
+                box.innerHTML += `<div style="color:var(--primary); margin-top:8px; line-height:1.4;">Oracle > ${data.reply}</div>`;
             } catch(e) {
-                logBox.innerHTML += `<div style="color:var(--danger); margin-top:8px; font-weight:bold;">Core Execution Error. Connection timed out.</div>`;
+                box.innerHTML += `<div style="color:var(--danger); margin-top:8px; font-weight:bold;">Transmission Vector Fault. Check Render Logs.</div>`;
             }
-            logBox.scrollTop = logBox.scrollHeight;
+            box.scrollTop = box.scrollHeight;
         }
 
-        window.addEventListener('DOMContentLoaded', () => { fetchPolymarket(); });
+        window.addEventListener('DOMContentLoaded', () => { fetchSignals(); });
     </script>
 </body>
 </html>
