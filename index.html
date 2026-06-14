@@ -678,4 +678,43 @@ function renderPoly(cat) {
             </div>
 
             <div class="pick-card">
-                <div class="pick-title">
+                <div class="pick-title">🥇 ${pick1.title || '—'}</div>
+                <div class="pick-meta">
+                    <span class="pick-odds">${pick1.odds || '—'}</span>
+                    <span class="pick-conf">${pick1.confidence || '—'}</span>
+                    <span class="pick-edge ${edgeClass1}">Edge: ${pick1.edge || '—'}</span>
+                </div>
+                <div class="pick-reason">${pick1.reason || '—'}</div>
+            </div>
+
+            <div class="pick-card">
+                <div class="pick-title">🥈 ${pick2.title || '—'}</div>
+                <div class="pick-meta">
+                    <span class="pick-odds">${pick2.odds || '—'}</span>
+                    <span class="pick-conf">${pick2.confidence || '—'}</span>
+                    <span class="pick-edge ${edgeClass2}">Edge: ${pick2.edge || '—'}</span>
+                </div>
+                <div class="pick-reason">${pick2.reason || '—'}</div>
+            </div>
+        </div>
+
+        <div class="poly-signal">
+            <div class="ps-left">
+                <div class="ps-lbl">⚡ AI Prediction Signal</div>
+                <div class="ps-thesis">${signal.thesis || '—'}</div>
+            </div>
+            <div class="ps-right">
+                <div class="ps-dir ${isLong ? 'long' : 'short'}">${signal.direction || 'BUY'}</div>
+                <div class="ps-risk" style="color:${riskClr}">Risk: ${signal.risk || 'MED'}</div>
+            </div>
+        </div>`;
+}
+
+// ── BOOT ─────────────────────────────────────────────────
+
+fetch(`${API}/ping`).catch(() => {});
+loadSignals();
+loadNews();
+</script>
+</body>
+</html>
