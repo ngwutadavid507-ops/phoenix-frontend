@@ -677,4 +677,23 @@ function renderPoly(cat) {
                 <div class="pick-reason">${pick2.reason||'—'}</div>
             </div>
         </div>
-        <d
+        <div class="poly-signal">
+            <div style="flex:1">
+                <div class="ps-lbl">⚡ AI Prediction Signal</div>
+                <div class="ps-thesis">${signal.thesis||'—'}</div>
+            </div>
+            <div class="ps-right">
+                <div class="ps-dir ${isLong?'long':'short'}">${signal.direction||'BUY'}</div>
+                <div class="ps-risk" style="color:${riskClr}">Risk: ${signal.risk||'MED'}</div>
+            </div>
+        </div>`;
+}
+
+// ── BOOT ─────────────────────────────────────────────────
+
+fetch(`${API}/ping`).catch(()=>{});
+loadSignals();
+loadNews();
+</script>
+</body>
+</html>
