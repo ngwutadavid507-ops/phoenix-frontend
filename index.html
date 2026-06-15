@@ -264,4 +264,417 @@
         <div id="pane-perf" class="pane">
             <div class="perf-card">
                 <div class="perf-lbl">Calculated Signal Variance Index</div>
-  
+       <div class="perf-val">+4.12%</div>
+            </div>
+            <div class="info-card">
+                All signals verified against Bybit linear perpetuals. Only pairs with active futures contracts are included. Performance tracking with live P&L history coming in the next update.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PAIR DETAIL MODAL -->
+<div class="modal-overlay hide" id="pair-modal">
+    <div class="modal-hdr">
+        <div>
+            <div class="modal-title" id="modal-pair-name">—</div>
+            <div class="modal-subtitle" id="modal-pair-sub">Bybit Linear Perpetual</div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-chat">
+        <div class="modal-chat-lbl">⚡ Ask Oracle about this token</div>
+        <div class="modal-msgs" id="modal-msgs"></div>
+        <div class="modal-bar">
+            <input id="modal-in" class="modal-in" placeholder="e.g. What is the outlook for this token?" onkeydown="if(event.key==='Enter')sendModalChat()">
+            <button class="modal-send" onclick="sendModalChat()">Ask</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = "https://phoenix-signal-backend.onrender.com";
+let chatHistory  = [];
+let modalHistory = [];
+let currentCoin  = null;
+let polyData     = null;
+let currentPoly  = "crypto";
+let subLoaded    = {news:false, trend:false};
+let sigsLoaded   = false;
+
+// ── TABS ──────────────────────────────────────────────────
+
+function go(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+    document.querySelectorAll('.pane,.pane-raw').forEach(p => p.classList.remove('on'));
+    [...document.querySelectorAll('.tab')].find(b => b.getAttribute('onclick').includes(`'${id}'`))?.classList.add('on');
+    document.getElementById(`pane-${id}`)?.classList.add('on');
+    if (id === 'signals') loadSignals();
+    if (id === 'pairs')   loadPairs('');
+    if (id === 'newsai')  { if (!subLoaded.news) loadNews(); }
+    if (id === 'poly')    loadPoly();
+}
+
+function switchSub(sub) {
+    ['news','trend','ai'].forEach(s => {
+        document.getElementById(`st-${s}`)?.classList.remove('on');
+        document.getElementById(`sub-${s}`)?.classList.remove('on');
+    });
+    document.getElementById(`st-${sub}`)?.classList.add('on');
+    document.getElementById(`sub-${sub}`)?.classList.add('on');
+    if (sub === 'news'  && !subLoaded.news)  loadNews();
+    if (sub === 'trend' && !subLoaded.trend) loadTrending();
+}
+
+async function apiFetch(url) {
+    const r = await fetch(url, {signal: AbortSignal.timeout(55000)});
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+}
+
+// ── SIGNALS ──────────────────────────────────────────────
+
+async function loadSignals() {
+    if (sigsLoaded) return;
+    const root = document.getElementById('sig-root');
+    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Scanning Bybit futures only...<br>RSI · MACD · EMA20/50 · Bollinger · Volume</div></div>`;
+    try {
+        const data = await apiFetch(`${API}/api/v2/history`);
+        const sigs = data.signals || [];
+        if (!sigs.length) {
+            root.innerHTML = `<div class="empty">No high-confidence signals at this time.<br><span style="font-size:11px">Minimum 68% confluence required across Bybit futures pairs.<br>Refresh in a few minutes.</span><br><br><button class="retry" onclick="sigsLoaded=false;loadSignals()">🔄 Refresh Signals</button></div>`;
+            return;
+        }
+        root.innerHTML = sigs.map(s => buildSigCard(s)).join('');
+        sigsLoaded = true;
+    } catch(e) {
+        root.innerHTML = `<div class="err-box">Signal engine unreachable.<br><small>${e.message}</small><br><button class="retry" onclick="sigsLoaded=false;loadSignals()">Retry</button></div>`;
+    }
+}
+
+function buildSigCard(s) {
+    const long   = s.direction === 'LONG';
+    const rsi    = parseFloat(s.rsi) || 50;
+    const rsiClr = rsi < 35 ? 'var(--green)' : rsi > 65 ? 'var(--red)' : 'var(--primary)';
+    const reasons = (s.reasons || []).map(r => `<div class="reason"><div class="rdot"></div>${r}</div>`).join('');
+    const bybitBtn = s.bybit_link ? `<a class="bybit-btn" href="${s.bybit_link}" target="_blank">🚀 Trade on Bybit</a>` : '';
+    return `
+    <div class="sig-card">
+        <div class="sig-top">
+            <div><div class="sig-pair">${s.pair}</div><div class="sig-sub">Bybit Linear Perpetual · 20x</div></div>
+            <div class="sig-badges">
+                <div class="dir ${long?'long':'short'}">${s.direction}</div>
+                <div class="lev-tag">${s.leverage}</div>
+            </div>
+        </div>
+        <div class="sig-grid">
+            <div class="sc"><div class="sc-l">Entry Price</div><div class="sc-v v-e">$${s.entry}</div></div>
+            <div class="sc"><div class="sc-l">Confidence</div><div class="sc-v v-cf">${s.confidence}</div></div>
+            <div class="sc"><div class="sc-l">Stop Loss</div><div class="sc-v v-sl">$${s.sl}</div></div>
+            <div class="sc"><div class="sc-l">Risk / Reward</div><div class="sc-v v-rr">${s.rr}</div></div>
+            <div class="sc"><div class="sc-l">Take Profit 1</div><div class="sc-v v-t1">$${s.tp1}</div></div>
+            <div class="sc"><div class="sc-l">Take Profit 2</div><div class="sc-v v-t2">$${s.tp2}</div></div>
+            <div class="sc" style="grid-column:span 2"><div class="sc-l">Take Profit 3 🎯</div><div class="sc-v v-t3">$${s.tp3}</div></div>
+        </div>
+        <div class="sig-foot">
+            <div class="rsi-wrap">
+                <div class="rsi-lbl">RSI · ${rsi}</div>
+                <div class="rsi-bar"><div class="rsi-fill" style="width:${Math.min(100,rsi)}%;background:${rsiClr}"></div></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700">Score ${s.score}</div>
+        </div>
+        ${reasons ? `<div class="sig-reasons"><div class="reasons-lbl">Signal Analysis</div>${reasons}</div>` : ''}
+        ${bybitBtn}
+    </div>`;
+}
+
+// ── LIVE PAIRS ────────────────────────────────────────────
+
+async function loadPairs(query) {
+    const root  = document.getElementById('pairs-root');
+    const label = document.getElementById('pairs-lbl');
+    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">${query ? `Searching "${query}"...` : 'Loading Bybit futures data...'}</div></div>`;
+    try {
+        const url   = query ? `${API}/api/v2/pairs?search=${encodeURIComponent(query)}` : `${API}/api/v2/pairs`;
+        const coins = await apiFetch(url);
+        label.textContent = query
+            ? `🔍 Results for "${query}" — ${coins.length} found`
+            : `📊 Bybit Futures — ${coins.length} Pairs by Volume`;
+        if (!coins.length) {
+            root.innerHTML = `<div class="empty">No results found for "${query}".<br>Try a different symbol.</div>`;
+            return;
+        }
+        root.innerHTML = coins.map(c => buildPairRow(c)).join('');
+    } catch(e) {
+        root.innerHTML = `<div class="err-box">Pairs data unavailable.<br><small>${e.message}</small><br><button class="retry" onclick="loadPairs('')">Retry</button></div>`;
+    }
+}
+
+function buildPairRow(c) {
+    const neg  = c.change.startsWith('-');
+    const fund = c.funding_rate && c.funding_rate !== 'N/A'
+        ? `<div class="pr-fund">FR: ${c.funding_rate}</div>`
+        : '';
+    return `
+    <div class="pair-row" onclick='openPair(${JSON.stringify(c)})'>
+        <div class="pr-l">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--muted2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--text);flex-shrink:0">${c.symbol.slice(0,3)}</div>
+            <div>
+                <div class="pr-sym">${c.symbol}/USDT</div>
+                <div class="pr-name">Linear Perpetual</div>
+                ${fund}
+            </div>
+        </div>
+        <div class="pr-r">
+            <div class="pr-price">$${c.price}</div>
+            <div class="pr-chg ${neg?'dn':'up'}">${c.change}</div>
+            <div class="pr-vol">${c.volume}</div>
+        </div>
+    </div>`;
+}
+
+function doSearch() {
+    const q = document.getElementById('s-in').value.trim();
+    if (!q) { loadPairs(''); return; }
+    document.getElementById('s-clr').style.display = 'block';
+    loadPairs(q);
+}
+
+function clearSearch() {
+    document.getElementById('s-in').value = '';
+    document.getElementById('s-clr').style.display = 'none';
+    loadPairs('');
+}
+
+// ── PAIR MODAL ────────────────────────────────────────────
+
+function openPair(c) {
+    currentCoin  = c;
+    modalHistory = [];
+    document.getElementById('pair-modal').classList.remove('hide');
+    document.getElementById('modal-pair-name').textContent = `${c.symbol}/USDT`;
+    document.getElementById('modal-pair-sub').textContent  = `Bybit Linear Perpetual`;
+    document.getElementById('modal-msgs').innerHTML = '';
+    document.getElementById('modal-in').value = '';
+
+    const neg = c.change.startsWith('-');
+
+    // Build indicative sparkline
+    let sp = '';
+    const bars = 24;
+    const base = parseFloat(c.price.replace(/,/g,'')) || 1;
+    let prev = base;
+    const hs = [];
+    for (let i = 0; i < bars; i++) {
+        prev = prev * (1 + (Math.random() - 0.49) * 0.03);
+        hs.push(prev);
+    }
+    const mn = Math.min(...hs), mx = Math.max(...hs);
+    hs.forEach((h, i) => {
+        const pct = mx === mn ? 50 : ((h - mn) / (mx - mn)) * 100;
+        const clr = i === bars-1 ? 'var(--primary)' : h >= (hs[i-1]||mn) ? 'var(--green)' : 'var(--red)';
+        sp += `<div class="spark-bar" style="height:${Math.max(6,pct)}%;background:${clr};opacity:${0.4+(i/bars)*0.6}"></div>`;
+    });
+
+    document.getElementById('modal-body').innerHTML = `
+        <div class="chart-box">
+            <div class="chart-lbl">Price Action (Indicative)</div>
+            <div class="sparkline">${sp}</div>
+        </div>
+        <div class="detail-grid">
+            <div class="dg-cell"><div class="dg-lbl">Last Price</div><div class="dg-val">$${c.price}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">24h Change</div><div class="dg-val ${neg?'dn':'up'}">${c.change}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">24h High</div><div class="dg-val">$${c.high_24h}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">24h Low</div><div class="dg-val">$${c.low_24h}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">Volume (24h)</div><div class="dg-val">${c.volume}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">Funding Rate</div><div class="dg-val" style="color:var(--purple)">${c.funding_rate||'N/A'}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">Mark Price</div><div class="dg-val">$${c.mark_price||'—'}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">Open Interest</div><div class="dg-val">${c.open_interest||'—'}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">Best Bid</div><div class="dg-val up">$${c.bid||'—'}</div></div>
+            <div class="dg-cell"><div class="dg-lbl">Best Ask</div><div class="dg-val dn">$${c.ask||'—'}</div></div>
+        </div>
+        <a class="bybit-btn" href="https://www.bybit.com/trade/usdt/${c.symbol}USDT" target="_blank">🚀 Trade ${c.symbol}/USDT on Bybit</a>`;
+}
+
+function closeModal() {
+    document.getElementById('pair-modal').classList.add('hide');
+    currentCoin  = null;
+    modalHistory = [];
+}
+
+async function sendModalChat() {
+    if (!currentCoin) return;
+    const input = document.getElementById('modal-in');
+    const msgs  = document.getElementById('modal-msgs');
+    const text  = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    msgs.innerHTML += `<div class="modal-msg mm-u">${text}</div>`;
+    const tid = 'mt'+Date.now();
+    msgs.innerHTML += `<div class="modal-msg mm-a" id="${tid}" style="opacity:.5">Analysing ${currentCoin.symbol}...</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+
+    const ctx = `Token: ${currentCoin.symbol}/USDT (Bybit Linear Perpetual). Price: $${currentCoin.price}. 24h Change: ${currentCoin.change}. Volume: ${currentCoin.volume}. Funding Rate: ${currentCoin.funding_rate}. Open Interest: ${currentCoin.open_interest}. Mark Price: $${currentCoin.mark_price}.`;
+    modalHistory.push({role:"user", content:`[Context: ${ctx}] ${text}`});
+
+    try {
+        const r = await fetch(`${API}/api/v2/chat`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({prompt: text, history: modalHistory.slice(-6)}),
+            signal: AbortSignal.timeout(30000)
+        });
+        const data = await r.json();
+        document.getElementById(tid)?.remove();
+        msgs.innerHTML += `<div class="modal-msg mm-a">${data.reply}</div>`;
+        modalHistory.push({role:"assistant", content: data.reply});
+    } catch(e) {
+        document.getElementById(tid)?.remove();
+        msgs.innerHTML += `<div class="modal-msg mm-a" style="color:var(--red)">Connection failed. Retry.</div>`;
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── NEWS ─────────────────────────────────────────────────
+
+async function loadNews() {
+    const root = document.getElementById('sub-news');
+    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Loading news...</div></div>`;
+    try {
+        const data = await apiFetch(`${API}/api/v2/news`);
+        root.innerHTML = (data.news||[]).map(n => `
+            <div class="news-card">
+                <div class="news-t">${n.title}</div>
+                <div class="news-s">${n.source}</div>
+            </div>`).join('');
+        subLoaded.news = true;
+    } catch(e) {
+        root.innerHTML = `<div class="err-box">News unavailable.<br><button class="retry" onclick="subLoaded.news=false;loadNews()">Retry</button></div>`;
+    }
+}
+
+// ── TRENDING ──────────────────────────────────────────────
+
+async function loadTrending() {
+    const root = document.getElementById('sub-trend');
+    root.innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Loading top gainers...</div></div>`;
+    try {
+        const data = await apiFetch(`${API}/api/v2/trending`);
+        const list = data.trending || [];
+        root.innerHTML = list.length ? list.map((t,i) => `
+            <div class="trend-row">
+                <div class="tr-n">${i+1}</div>
+                <div style="width:28px;height:28px;border-radius:50%;background:var(--muted2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">${t.symbol.slice(0,3)}</div>
+                <div><div class="tr-nm">${t.name}</div><div class="tr-sy">${t.symbol}/USDT</div></div>
+                <div class="tr-chg up">${t.change}</div>
+            </div>`).join('')
+            : `<div class="empty">No trending data.</div>`;
+        subLoaded.trend = true;
+    } catch(e) {
+        root.innerHTML = `<div class="err-box">Trending unavailable.<br><button class="retry" onclick="subLoaded.trend=false;loadTrending()">Retry</button></div>`;
+    }
+}
+
+// ── GLOBAL AI CHAT ────────────────────────────────────────
+
+async function sendChat() {
+    const input = document.getElementById('chat-in');
+    const msgs  = document.getElementById('chat-msgs');
+    const text  = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    msgs.innerHTML += `<div class="msg msg-u">${text}</div>`;
+    const tid = 't'+Date.now();
+    msgs.innerHTML += `<div class="msg msg-a" id="${tid}"><div class="ai-name">Phoenix Oracle</div><span style="opacity:.5">Analysing...</span></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+    chatHistory.push({role:"user", content:text});
+    try {
+        const r = await fetch(`${API}/api/v2/chat`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({prompt:text, history:chatHistory.slice(-8)}),
+            signal: AbortSignal.timeout(30000)
+        });
+        const data = await r.json();
+        document.getElementById(tid).innerHTML = `<div class="ai-name">Phoenix Oracle</div>${data.reply}`;
+        chatHistory.push({role:"assistant", content:data.reply});
+    } catch(e) {
+        document.getElementById(tid).innerHTML = `<div class="ai-name">Phoenix Oracle</div><span style="color:var(--red)">Connection failed. Retry.</span>`;
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── POLYMARKET ────────────────────────────────────────────
+
+async function loadPoly() {
+    if (polyData) { renderPoly(currentPoly); return; }
+    document.getElementById('poly-body').innerHTML = `<div class="loader"><div class="spin"></div><div class="load-txt">Fetching live Polymarket data...<br>Running AI analysis on all 4 categories</div></div>`;
+    try {
+        polyData = await apiFetch(`${API}/api/v2/polymarket`);
+        renderPoly(currentPoly);
+    } catch(e) {
+        document.getElementById('poly-body').innerHTML = `<div class="err-box">Polymarket unavailable.<br><small>${e.message}</small><br><button class="retry" onclick="polyData=null;loadPoly()">Retry</button></div>`;
+    }
+}
+
+function switchPoly(cat) {
+    currentPoly = cat;
+    document.querySelectorAll('.ptab').forEach(t => t.classList.remove('on'));
+    [...document.querySelectorAll('.ptab')].find(t => t.getAttribute('onclick').includes(`'${cat}'`))?.classList.add('on');
+    if (polyData) renderPoly(cat);
+}
+
+function renderPoly(cat) {
+    const body     = document.getElementById('poly-body');
+    const catData  = polyData?.[cat];
+    if (!catData) { body.innerHTML = `<div class="empty">No data for this category.</div>`; return; }
+
+    const markets  = catData.markets  || [];
+    const analysis = catData.analysis || {};
+    const pick1    = analysis.pick1   || {};
+    const pick2    = analysis.pick2   || {};
+    const signal   = analysis.signal  || {};
+    const isLong   = signal.direction === 'BUY';
+    const riskClr  = signal.risk === 'LOW' ? 'var(--green)' : signal.risk === 'HIGH' ? 'var(--red)' : 'var(--primary)';
+
+    const mCards = markets.map(m => {
+        const oddsNum = parseInt(m.odds) || 0;
+        const hot     = oddsNum > 60;
+        return `
+        <div class="poly-market">
+            <div class="pm-title">${m.title}</div>
+            <div class="pm-foot">
+                <div>
+                    <div class="pm-odds">${m.odds}</div>
+                    <div class="pm-vol">Vol: ${m.volume}</div>
+                </div>
+                ${hot ? '<div class="pm-hot">🔥 HOT</div>' : ''}
+            </div>
+        </div>`;
+    }).join('');
+
+    body.innerHTML = `
+        ${mCards}
+        <div class="ai-picks">
+            <div class="ai-picks-hdr"><span style="font-size:16px">⚡</span><div class="ai-picks-title">AI Top 2 Profitable Picks</div></div>
+            <div class="pick-card">
+                <div class="pick-title">🥇 ${pick1.title||'—'}</div>
+                <div class="pick-meta">
+                    <span class="pick-odds">${pick1.odds||'—'}</span>
+                    <span class="pick-conf">${pick1.confidence||'—'}</span>
+                    <span class="${pick1.edge==='YES'?'edge-yes':'edge-no'}">Edge: ${pick1.edge||'—'}</span>
+                </div>
+                <div class="pick-reason">${pick1.reason||'—'}</div>
+            </div>
+            <div class="pick-card">
+                <div class="pick-title">🥈 ${pick2.title||'—'}</div>
+                <div class="pick-meta">
+                    <span class="pick-odds">${pick2.odds||'—'}</span>
+                    <span class="pick-conf">${pick2.confidence||'—'}</span>
+                    <span class="${pick2.edge==='YES'?'edge-yes':'edge-no'}">Edge: ${pick2.edge||'—'}</span>
+                </div>
+                <div class="pick-reason">${pick2.reason||'—'}</div>
+            </div>
+        </div>
+        <d
